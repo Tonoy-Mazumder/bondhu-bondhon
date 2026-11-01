@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { Toaster } from "@/components/ui/toast";
 import { Navbar } from "@/components/site/navbar";
 import { Footer } from "@/components/site/footer";
 import "./globals.css";
@@ -29,9 +30,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${jakartaSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Navbar />
-        <main className="flex flex-1 flex-col">{children}</main>
-        <Footer />
+        <Toaster>
+          <Navbar />
+          <main className="flex flex-1 flex-col">{children}</main>
+          <Footer />
+        </Toaster>
       </body>
     </html>
   );

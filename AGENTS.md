@@ -24,7 +24,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## Data & backend
 
 - Event data comes from an **external backend** at `http://localhost:5000/events` (must be running for events-related data to load; not an npm package). The event shape lives in `src/app/types/Events.ts` as `IEventItem` — type event data against it instead of redefining the shape elsewhere.
-- Event detail navigation conventionally targets `/events/<_id>` (the registered dynamic route).
+- Event detail navigation conventionally targets `/events/<_id>` (the registered dynamic route). Unknown ids make the backend return **500** (not 404) — treat any `!res.ok` (or an event object without `_id`) as `notFound()` in `/events/[id]`.
 - A `next dev` server is often already running on port 3000 (the user's). If `npm run dev` reports the port in use, do not kill it — smoke-test HTTP responses against the existing server instead.
 
 ## shadcn / Base UI

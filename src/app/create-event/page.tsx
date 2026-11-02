@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 
 const EVENT_TYPES = [
   "Tree Plantation",
@@ -18,12 +19,15 @@ const fieldClass =
 const labelClass = "mb-2 block text-sm font-semibold text-[#292524]";
 
 export default function CreateEventPage() {
+    
   const router = useRouter();
+  const { data: session } = authClient.useSession();
   const [dateError, setDateError] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+   
   e.preventDefault();
   setError("");
 
@@ -41,7 +45,13 @@ export default function CreateEventPage() {
     const res = await fetch("http://localhost:5000/create-events", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...data, createdAt: new Date().toISOString() }),
+    body: JSON.stringify({
+        ...data,
+        organizerId: session?.user.id,
+        organizerName: session?.user.name,
+        participants: [],
+        createdAt: new Date().toISOString(),
+      }),
     });
     if (!res.ok) throw new Error();
 

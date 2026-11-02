@@ -6,7 +6,7 @@ import type { IEventItem } from "@/app/types/Events";
 let events: IEventItem[] = [];
 let apiError = false;
 try {
-  const res = await fetch("http://localhost:5000/events");
+  const res = await fetch("http://localhost:5000/events", { cache: "no-store" });
   if (!res.ok) throw new Error(`Event API responded with ${res.status}`);
   events = (await res.json()) as IEventItem[];
 } catch {

@@ -1,3 +1,4 @@
+
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -11,22 +12,33 @@ type EventDetailsPageProps = {
   params: Promise<{ id: string }>;
 };
 
+const API =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 async function loadEvent(id: string): Promise<IEventItem | null> {
   try {
-    // fetch data manually here
-    const res = await fetch(`http://localhost:5000/events/${id}`);
+    const res = await fetch(`${API}/events/${id}`, {
+      cache: "no-store",
+    });
+
     if (!res.ok) return null;
+
     const event = (await res.json()) as IEventItem;
+
     if (!event?._id) return null;
+
     return event;
-  } catch {
+  } catch (error) {
+    console.error("Failed to load event:", error);
     return null;
   }
 }
 
 function formatDateTime(iso: string) {
   const date = new Date(iso);
+
   if (Number.isNaN(date.getTime())) return iso;
+
   return date.toLocaleString("en-GB", {
     day: "numeric",
     month: "short",
@@ -36,34 +48,48 @@ function formatDateTime(iso: string) {
   });
 }
 
-export async function generateMetadata({ params }: EventDetailsPageProps) {
+export async function generateMetadata({
+  params,
+}: EventDetailsPageProps) {
   const { id } = await params;
   const event = await loadEvent(id);
+
   if (!event) return { title: "Event not found" };
-  return { title: event.title, description: event.description };
+
+  return {
+    title: event.title,
+    description: event.description,
+  };
 }
 
-const EventDetailsPage = async ({ params }: EventDetailsPageProps) => {
+const EventDetailsPage = async ({
+  params,
+}: EventDetailsPageProps) => {
+  const requestHeaders = await headers();
+
   const session = await auth.api.getSession({
-    headers: await headers(),
+    headers: requestHeaders,
   });
+
   const { id } = await params;
   const event = await loadEvent(id);
+
   if (!event) notFound();
 
   return (
-    <section className="bg-[#F8F7F0]">
+    <section className="min-h-full bg-background">
       <div className="mx-auto w-full max-w-7xl px-4 py-12 md:px-6 md:py-16">
+        {/* Back Button */}
         <Link
           href="/upcoming-events"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[#14532D] transition-colors hover:text-[#14532D]/80"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[#14532D] transition-colors hover:text-[#14532D]/80 dark:text-emerald-400 dark:hover:text-emerald-300"
         >
-          <ArrowLeft className="size-4" aria-hidden />
+          <ArrowLeft className="size-4" aria-hidden="true" />
           Back to events
         </Link>
 
-        {/* cover photo */}
-        <div className="mt-6 overflow-hidden rounded-xl border-2 border-dashed border-[#14532D]/30">
+        {/* Cover Photo */}
+        <div className="mt-6 overflow-hidden rounded-xl border border-border">
           {event.image ? (
             <div className="relative h-64 w-full sm:h-80 lg:h-[420px]">
               <Image
@@ -76,56 +102,78 @@ const EventDetailsPage = async ({ params }: EventDetailsPageProps) => {
               />
             </div>
           ) : (
-            <div className="flex h-64 w-full items-center justify-center bg-[#DCE8DC] px-4 text-center text-sm text-[#14532D]/80 sm:h-80 lg:h-[420px]">
+            <div className="flex h-64 w-full items-center justify-center bg-muted px-4 text-center text-sm text-muted-foreground sm:h-80 lg:h-[420px]">
               Event cover photo
             </div>
           )}
         </div>
 
         <div className="mt-10 grid grid-cols-1 gap-10 lg:mt-12 lg:grid-cols-[1.1fr_0.9fr]">
+          {/* Event Information */}
           <div>
             <span className="w-fit rounded-full bg-[#D9F99D] px-3 py-1 text-xs font-semibold text-[#14532D]">
               {event.category}
             </span>
 
-            <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-[#14532D] sm:text-4xl lg:text-5xl">
+            <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
               {event.title}
             </h1>
 
-            <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-[#647067]">
-              <MapPin className="size-4 shrink-0" aria-hidden />
+            <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+              <MapPin className="size-4 shrink-0" aria-hidden="true" />
               {event.location}
-              <span aria-hidden>·</span>
-              <CalendarDays className="size-4 shrink-0" aria-hidden />
+
+              <span aria-hidden="true">·</span>
+
+              <CalendarDays
+                className="size-4 shrink-0"
+                aria-hidden="true"
+              />
               {formatDateTime(event.date)}
             </p>
 
-            <h2 className="mt-8 text-2xl font-extrabold text-[#14532D]">
+            <h2 className="mt-8 text-2xl font-extrabold text-foreground">
               About this event
             </h2>
-            <p className="mt-3 whitespace-pre-line leading-relaxed text-[#292524]">
+
+            <p className="mt-3 whitespace-pre-line leading-relaxed text-foreground/85">
               {event.description}
             </p>
           </div>
 
+          {/* Organizer and Join Event */}
+       
           <aside>
-            <div className="rounded-xl border border-border/60 bg-white p-6 shadow-sm lg:sticky lg:top-8">
+            <div className="rounded-xl border border-border bg-card p-6 shadow-sm lg:sticky lg:top-8">
               <div className="flex items-center gap-3">
-                <span
-                  aria-hidden
-                  className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#DCE8DC] text-lg font-bold text-[#14532D]"
-                >
-                  {event.organizer?.charAt(0).toUpperCase() || "O"}
-                </span>
+                {event.organizerImage ? (
+                  <Image
+                    src={event.organizerImage}
+                    alt={event.organizerName || "Organizer"}
+                    width={48}
+                    height={48}
+                    className="size-12 shrink-0 rounded-full object-cover"
+                  />
+                ) : (
+                  <span
+                    aria-hidden="true"
+                    className="flex size-12 shrink-0 items-center justify-center rounded-full bg-muted text-lg font-bold text-foreground"
+                  >
+                    {event.organizerName?.charAt(0).toUpperCase() || "O"}
+                  </span>
+                )}
+
                 <div>
-                  <p className="font-semibold text-[#292524]">
-                    {event.organizer}
+                  <p className="font-semibold text-foreground">
+                    {event.organizerName || "Unknown Organizer"}
                   </p>
-                  <p className="text-sm text-[#647067]">Organizer</p>
+
+                  <p className="text-sm text-muted-foreground">
+                    Organizer
+                  </p>
                 </div>
               </div>
 
-              {/* join event — client button; toast + joined state handled inside */}
               <JoinEventButton
                 eventId={String(event._id)}
                 title={event.title}

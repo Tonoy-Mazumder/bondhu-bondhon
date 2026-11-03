@@ -1,3 +1,4 @@
+
 import Image from "next/image";
 import treePlanting from "@/assets/Tree planting.png";
 import cleanupCampaign from "@/assets/Cleanup Campaign.png";
@@ -5,7 +6,11 @@ import clothingDistribution from "@/assets/Clothing distribution.jpg";
 import foodDonation from "@/assets/Food donation.jpg";
 
 const galleryItems = [
-  { caption: "Tree planting", src: treePlanting, alt: "Volunteers planting trees together" },
+  {
+    caption: "Tree planting",
+    src: treePlanting,
+    alt: "Volunteers planting trees together",
+  },
   {
     caption: "Cleanup campaign",
     src: cleanupCampaign,
@@ -43,23 +48,25 @@ const steps = [
 
 export function ImpactGallery() {
   return (
-    <section className="border-t border-border/40 bg-[#F8F7F0]">
+    <section className="border-t border-border bg-background">
       <div className="mx-auto w-full max-w-7xl px-4 pt-16 pb-16 md:px-6 md:pt-20 md:pb-20 lg:pt-24 lg:pb-24">
         {/* Community Impact Gallery */}
         <div className="mx-auto max-w-xl text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight text-[#14532D] sm:text-4xl lg:text-5xl">
+          <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
             Community Impact Gallery
           </h2>
-          <p className="mt-4 text-base text-[#647067]">
+
+          <p className="mt-4 text-base text-muted-foreground">
             Moments from neighbors showing up for each other.
           </p>
         </div>
 
+        {/* Gallery Images */}
         <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 md:mt-16 lg:grid-cols-4 lg:gap-6">
           {galleryItems.map((item) => (
             <div
               key={item.caption}
-              className="relative h-56 overflow-hidden rounded-2xl border-2 border-dashed border-[#14532D]/30 bg-[#DCE8DC]"
+              className="relative h-56 overflow-hidden rounded-2xl border border-border bg-muted"
             >
               <Image
                 src={item.src}
@@ -75,7 +82,7 @@ export function ImpactGallery() {
 
         {/* How It Works */}
         <div className="mx-auto mt-24 max-w-xl text-center md:mt-32">
-          <h2 className="text-3xl font-extrabold tracking-tight text-[#14532D] sm:text-4xl lg:text-5xl">
+          <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
             How It Works
           </h2>
         </div>
@@ -86,10 +93,12 @@ export function ImpactGallery() {
               <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-[#14532D] text-xl font-extrabold text-[#D9F99D]">
                 {step.number}
               </div>
-              <h3 className="mt-5 text-xl font-extrabold text-[#14532D]">
+
+              <h3 className="mt-5 text-xl font-extrabold text-foreground">
                 {step.title}
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-[#647067]">
+
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 {step.description}
               </p>
             </div>

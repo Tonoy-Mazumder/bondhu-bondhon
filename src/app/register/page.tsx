@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -8,9 +9,9 @@ import { authClient, signUp } from "@/lib/auth-client";
 import communityPhoto from "@/assets/Together for a Greener Tomorrow.png";
 
 const fieldClass =
-  "w-full rounded-xl border border-[#D6D3C9] bg-white px-4 py-3 text-sm text-[#292524] outline-none placeholder:text-[#647067]/70 focus:border-[#14532D] focus:ring-2 focus:ring-[#D9F99D]";
+  "w-full rounded-xl border border-input bg-background px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-[#14532D] focus:ring-2 focus:ring-[#D9F99D]";
 
-const labelClass = "mb-2 block text-sm font-semibold text-[#292524]";
+const labelClass = "mb-2 block text-sm font-semibold text-foreground";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -31,39 +32,54 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
 
-    const data = Object.fromEntries(new FormData(e.currentTarget)) as Record<string, string>;
+    const data = Object.fromEntries(
+      new FormData(e.currentTarget)
+    ) as Record<string, string>;
 
     if (!validateEmail(data.email ?? "")) return;
 
     setSubmitting(true);
 
-    const { data:userData,error } = await signUp.email({
-      name: data.name.trim(),
-      email: data.email.trim(),
-      password: data.password,
-      ...(data.image?.trim() ? { image: data.image.trim() } : {}),
-    });
+    try {
+      const { error } = await signUp.email({
+        name: data.name.trim(),
+        email: data.email.trim(),
+        password: data.password,
+        ...(data.image?.trim() ? { image: data.image.trim() } : {}),
+      });
 
-    console.log(userData);
+      if (error) {
+        throw new Error(
+          error.message ?? "Could not create your account. Please try again."
+        );
+      }
 
-    if (error) {
-      setError(error.message ?? "Could not create your account. Please try again.");
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Could not create your account. Please try again."
+      );
+    } finally {
       setSubmitting(false);
-      return;
     }
-
-    router.push("/");
-    router.refresh();
   }
 
   async function handleGoogle() {
-    await authClient.signIn.social({ provider: "google", callbackURL: "/" });
+    await authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/",
+    });
   }
 
   return (
-    <main className="grid min-h-screen bg-[#F8F7F0] lg:grid-cols-2">
-      {/* Left: photo panel (hidden on mobile) */}
-      <aside className="relative hidden bg-[#DDE7DC] lg:block">
+    <main className="grid min-h-screen bg-background text-foreground lg:grid-cols-2">
+      {/* Left: photo panel */}
+      <aside className="relative hidden bg-muted lg:block">
         <Image
           src={communityPhoto}
           alt="Volunteers planting trees together"
@@ -95,21 +111,30 @@ export default function RegisterPage() {
                 <path d="M5 19c2-5 5-8 9-10" />
               </svg>
             </span>
-            <span className="font-serif text-xl font-bold text-[#14532D]">
+
+            <span className="font-serif text-xl font-bold text-[#14532D] dark:text-green-400">
               BondhuBondhon
             </span>
           </div>
 
-          <h1 className="mt-5 font-serif text-4xl font-bold text-[#14532D]">
+          <h1 className="mt-5 font-serif text-4xl font-bold text-foreground">
             Join BondhuBondhon
           </h1>
-          <p className="mt-3 text-sm text-[#647067]">
+
+          <p className="mt-3 text-sm text-muted-foreground">
             Create an account to organize and join events.
           </p>
 
-          <form onSubmit={handleSubmit} noValidate className="mt-5 space-y-4">
+          <form
+            onSubmit={handleSubmit}
+            noValidate
+            className="mt-5 space-y-4"
+          >
             <div>
-              <label htmlFor="name" className={labelClass}>Name</label>
+              <label htmlFor="name" className={labelClass}>
+                Name
+              </label>
+
               <input
                 id="name"
                 name="name"
@@ -122,7 +147,10 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="email" className={labelClass}>Email</label>
+              <label htmlFor="email" className={labelClass}>
+                Email
+              </label>
+
               <input
                 id="email"
                 name="email"
@@ -132,19 +160,28 @@ export default function RegisterPage() {
                 placeholder="you@example.com"
                 aria-invalid={!!emailError}
                 aria-describedby={emailError ? "email-error" : undefined}
-                onBlur={(e) => e.target.value && validateEmail(e.target.value)}
+                onBlur={(e) =>
+                  e.target.value && validateEmail(e.target.value)
+                }
                 onChange={() => emailError && setEmailError("")}
                 className={fieldClass}
               />
+
               {emailError && (
-                <p id="email-error" className="mt-1.5 text-xs text-red-700">
+                <p
+                  id="email-error"
+                  className="mt-1.5 text-xs text-red-600 dark:text-red-400"
+                >
                   {emailError}
                 </p>
               )}
             </div>
 
             <div>
-              <label htmlFor="image" className={labelClass}>Photo URL</label>
+              <label htmlFor="image" className={labelClass}>
+                Photo URL
+              </label>
+
               <input
                 id="image"
                 name="image"
@@ -155,7 +192,10 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className={labelClass}>Password</label>
+              <label htmlFor="password" className={labelClass}>
+                Password
+              </label>
+
               <div className="relative">
                 <input
                   id="password"
@@ -166,11 +206,12 @@ export default function RegisterPage() {
                   autoComplete="new-password"
                   className={`${fieldClass} pr-16`}
                 />
+
                 <button
                   type="button"
                   onClick={() => setShowPassword((s) => !s)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="absolute inset-y-0 right-4 text-xs text-[#647067] hover:text-[#14532D]"
+                  className="absolute inset-y-0 right-4 text-xs text-muted-foreground hover:text-foreground"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
@@ -178,33 +219,40 @@ export default function RegisterPage() {
             </div>
 
             {error && (
-              <p role="alert" className="text-sm text-red-700">{error}</p>
+              <p
+                role="alert"
+                className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400"
+              >
+                {error}
+              </p>
             )}
 
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-xl bg-[#14532D] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#14532D]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D9F99D] disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-xl bg-[#14532D] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#166534] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D9F99D] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? "Creating account..." : "Create account"}
             </button>
 
-            <p className="text-center text-sm text-[#647067]">or</p>
+            <p className="text-center text-sm text-muted-foreground">
+              or
+            </p>
 
             <button
               type="button"
               onClick={handleGoogle}
-              className="w-full rounded-xl border border-[#D6D3C9] bg-white px-4 py-3 text-sm font-semibold text-[#292524] transition-colors hover:bg-[#F8F7F0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D9F99D]"
+              className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D9F99D]"
             >
               Continue with Google
             </button>
           </form>
 
-          <p className="mt-4 text-sm text-[#647067]">
+          <p className="mt-4 text-sm text-muted-foreground">
             Already a member?{" "}
             <Link
               href="/login"
-              className="font-semibold text-[#14532D] underline underline-offset-2"
+              className="font-semibold text-[#14532D] underline underline-offset-2 dark:text-green-400"
             >
               Log in
             </Link>

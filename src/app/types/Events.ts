@@ -11,4 +11,6 @@ export type IEventItem = {
   joinedCount: number;
   status: string;
   participants?: string[];
+  organizerName?: string;
+  organizerImage?: string;
 };

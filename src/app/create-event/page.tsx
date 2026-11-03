@@ -6,7 +6,7 @@ import { authClient } from "@/lib/auth-client";
 import { useState } from "react";
 import { toast } from "@/components/ui/toast";
 
-const API = process.env.NEXT_PUBLIC_API_URL;
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 const EVENT_TYPES = [
   "Tree Plantation",
@@ -18,11 +18,10 @@ const EVENT_TYPES = [
 ];
 
 const fieldClass =
-  "w-full rounded-lg border border-[#d6dfd5] bg-white px-4 py-3 text-sm text-[#292524] outline-none transition focus:border-[#14532D] focus:ring-2 focus:ring-[#14532D]/10";
+  "w-full rounded-lg border border-input bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition focus:border-[#14532D] focus:ring-2 focus:ring-[#14532D]/10";
 
-const labelClass = "mb-2 block text-sm font-semibold text-[#292524]";
+const labelClass = "mb-2 block text-sm font-semibold text-foreground";
 
-// Get tomorrow's date
 function getTomorrowDate() {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -44,9 +43,7 @@ export default function CreateEventPage() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  async function handleSubmit(
-    e: React.FormEvent<HTMLFormElement>
-  ) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     setError("");
@@ -60,7 +57,6 @@ export default function CreateEventPage() {
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries());
 
-    // Date validation
     const selectedDate = String(data.date || "");
 
     if (!selectedDate || selectedDate < minDate) {
@@ -69,7 +65,6 @@ export default function CreateEventPage() {
       return;
     }
 
-    // Capacity validation
     const capacity = Number(data.capacity);
 
     if (
@@ -99,7 +94,6 @@ export default function CreateEventPage() {
     try {
       setSubmitting(true);
 
-      // Generate JWT
       const { data: tokenData, error: tokenError } =
         await authClient.token();
 
@@ -121,10 +115,12 @@ export default function CreateEventPage() {
       if (!res.ok) {
         throw new Error(result.message || "Failed to create event.");
       }
+
       toast.add({
         title: "Event created successfully!",
         type: "success",
       });
+
       router.push("/upcoming-events");
       router.refresh();
     } catch (err) {
@@ -140,34 +136,31 @@ export default function CreateEventPage() {
 
   if (isPending) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-sm text-[#647067]">Loading...</p>
+      <div className="flex min-h-[60vh] items-center justify-center bg-background">
+        <p className="text-sm text-muted-foreground">Loading...</p>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#F8F7F0] px-4 py-12">
+    <main className="min-h-screen bg-background px-4 py-12">
       <div className="mx-auto max-w-3xl">
-        {/* Heading */}
         <div className="mb-8 text-center">
           <span className="mb-3 inline-block rounded-full bg-[#D9F99D] px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-[#14532D]">
             Make a Difference
           </span>
 
-          <h1 className="text-3xl font-bold text-[#14532D] md:text-4xl">
+          <h1 className="text-3xl font-bold text-foreground md:text-4xl">
             Create an Event
           </h1>
 
-          <p className="mt-3 text-sm text-[#647067] md:text-base">
+          <p className="mt-3 text-sm text-muted-foreground md:text-base">
             Bring people together and make your community better.
           </p>
         </div>
 
-        {/* Form */}
-        <div className="rounded-2xl border border-[#e4e8df] bg-white p-5 shadow-sm md:p-8">
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm md:p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Event Title */}
             <div>
               <label htmlFor="title" className={labelClass}>
                 Event Title
@@ -184,7 +177,6 @@ export default function CreateEventPage() {
               />
             </div>
 
-            {/* Description */}
             <div>
               <label htmlFor="description" className={labelClass}>
                 Description
@@ -201,7 +193,6 @@ export default function CreateEventPage() {
               />
             </div>
 
-            {/* Category */}
             <div>
               <label htmlFor="category" className={labelClass}>
                 Event Category
@@ -226,7 +217,6 @@ export default function CreateEventPage() {
               </select>
             </div>
 
-            {/* Image URL */}
             <div>
               <label htmlFor="image" className={labelClass}>
                 Event Image URL
@@ -242,7 +232,6 @@ export default function CreateEventPage() {
               />
             </div>
 
-            {/* Location */}
             <div>
               <label htmlFor="location" className={labelClass}>
                 Event Location
@@ -258,7 +247,6 @@ export default function CreateEventPage() {
               />
             </div>
 
-            {/* Date and Capacity */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
                 <label htmlFor="date" className={labelClass}>
@@ -281,7 +269,7 @@ export default function CreateEventPage() {
                 />
 
                 {dateError && (
-                  <p className="mt-2 text-xs text-red-600">
+                  <p className="mt-2 text-xs text-red-600 dark:text-red-400">
                     Please select a future date.
                   </p>
                 )}
@@ -305,14 +293,12 @@ export default function CreateEventPage() {
               </div>
             </div>
 
-            {/* Error Message */}
             {error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
                 {error}
               </div>
             )}
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={submitting || !session?.user}
@@ -322,7 +308,7 @@ export default function CreateEventPage() {
             </button>
 
             {!session?.user && (
-              <p className="text-center text-sm text-red-600">
+              <p className="text-center text-sm text-red-600 dark:text-red-400">
                 Please sign in to create an event.
               </p>
             )}

@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toast";
 import { Navbar } from "@/components/site/navbar";
 import { Footer } from "@/components/site/footer";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
 
 // Plus Jakarta Sans is a variable font: next/font serves the full weight
 // range (400–800) without a `weight` array, and exposing it as
@@ -27,14 +28,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${jakartaSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <ThemeProvider>
+
         <Toaster>
           <Navbar />
           <main className="flex flex-1 flex-col">{children}</main>
           <Footer />
         </Toaster>
+        </ThemeProvider>
       </body>
     </html>
   );

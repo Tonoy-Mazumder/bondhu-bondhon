@@ -73,11 +73,12 @@ export function EventsBrowser({
     `rounded-full px-4 py-2 text-sm font-medium transition-colors ${
       active
         ? "bg-[#14532D] text-white"
-        : "border border-border bg-white text-[#292524] hover:border-[#14532D]/40"
+        : "border border-border bg-card text-foreground hover:border-[#14532D]/50 hover:bg-accent"
     }`;
 
   return (
     <>
+      {/* Search and Sort */}
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <input
           type="text"
@@ -85,7 +86,7 @@ export function EventsBrowser({
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by title or location"
           aria-label="Search events by title or location"
-          className="h-12 flex-1 rounded-xl border border-border bg-white px-4 text-sm text-[#292524] placeholder:text-[#647067] focus:outline-2 focus:outline-offset-2 focus:outline-[#14532D]/50"
+          className="h-12 flex-1 rounded-xl border border-border bg-background px-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-2 focus:outline-offset-2 focus:outline-[#14532D]/50"
         />
 
         <select
@@ -94,7 +95,7 @@ export function EventsBrowser({
             setSort(e.target.value as SortOption)
           }
           aria-label="Sort events by date"
-          className="h-12 rounded-xl border border-border bg-white px-4 text-sm text-[#292524] sm:w-52"
+          className="h-12 rounded-xl border border-border bg-background px-4 text-sm text-foreground sm:w-52"
         >
           {Object.entries(SORT_OPTIONS).map(([key, value]) => (
             <option key={key} value={key}>
@@ -104,6 +105,7 @@ export function EventsBrowser({
         </select>
       </div>
 
+      {/* Category Filters */}
       <div className="mt-4 flex flex-wrap gap-2">
         <button
           type="button"
@@ -131,13 +133,14 @@ export function EventsBrowser({
         ))}
       </div>
 
+      {/* Empty State or Event Cards */}
       {visibleEvents.length === 0 ? (
-        <div className="mt-8 rounded-xl border border-border/60 bg-white p-10 text-center">
-          <h3 className="text-2xl font-extrabold text-[#14532D]">
+        <div className="mt-8 rounded-xl border border-border bg-card p-10 text-center">
+          <h3 className="text-2xl font-extrabold text-foreground">
             No events found
           </h3>
 
-          <p className="mt-2 text-sm text-[#647067]">
+          <p className="mt-2 text-sm text-muted-foreground">
             Try a different search or filter.
           </p>
 
@@ -148,7 +151,7 @@ export function EventsBrowser({
               setSort("soonest");
               setCategory(null);
             }}
-            className="mt-5 inline-flex h-11 items-center justify-center rounded-lg border border-[#14532D]/40 bg-white px-6 text-sm font-semibold text-[#14532D]"
+            className="mt-5 inline-flex h-11 items-center justify-center rounded-lg border border-[#14532D]/40 bg-card px-6 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
           >
             Clear filters
           </button>

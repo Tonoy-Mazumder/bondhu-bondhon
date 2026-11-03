@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { Leaf } from "lucide-react";
 
@@ -44,23 +45,29 @@ export function Footer() {
           {/* Brand */}
           <div className="max-w-xs">
             <span className="flex size-11 items-center justify-center rounded-xl bg-[#D9F99D]">
-              <Leaf className="size-5 text-[#14532D]" strokeWidth={2.2} />
+              <Leaf
+                className="size-5 text-[#14532D]"
+                strokeWidth={2.2}
+              />
             </span>
+
             <p className="mt-4 text-xl font-bold tracking-tight text-white">
               BondhuBondhon
             </p>
+
             <p className="mt-3 text-sm leading-relaxed text-emerald-100/85">
               A platform connecting neighbors with local community-service
               events.
             </p>
           </div>
 
-          {/* Link columns */}
+          {/* Link Columns */}
           {columns.map((column) => (
             <nav key={column.title} aria-label={column.title}>
               <h3 className="text-sm font-semibold text-white">
                 {column.title}
               </h3>
+
               <ul className="mt-5 flex flex-col gap-3">
                 {column.items.map((item) => (
                   <li key={item.label}>
@@ -77,7 +84,8 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-12 border-t border-emerald-100/15 pt-6">
+        {/* Copyright */}
+        <div className="mt-12 border-t border-emerald-100/20 pt-6">
           <p className="text-sm text-emerald-100/70">
             © 2026 BondhuBondhon. All rights reserved.
           </p>

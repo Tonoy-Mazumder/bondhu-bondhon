@@ -27,8 +27,10 @@ function formatDate(value: string) {
 }
 
 export default async function ManageEventsPage() {
+  const requestHeaders = await headers();
+
   const session = await auth.api.getSession({
-    headers: await headers(),
+    headers: requestHeaders,
   });
 
   const userId = session?.user?.id;
@@ -37,51 +39,51 @@ export default async function ManageEventsPage() {
   let apiError = false;
 
   if (userId) {
-  try {
-    const { token } = await auth.api.getToken({
-      headers: await headers(),
-    });
+    try {
+      const { token } = await auth.api.getToken({
+        headers: requestHeaders,
+      });
 
-    if (!token) {
-      throw new Error("Authentication token not found");
-    }
-
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/my-events`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        cache: "no-store",
+      if (!token) {
+        throw new Error("Authentication token not found");
       }
-    );
 
-    if (!res.ok) {
-      throw new Error("Failed to fetch events");
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/my-events`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: "no-store",
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch events");
+      }
+
+      events = await res.json();
+    } catch (error) {
+      console.error("Failed to load events:", error);
+      apiError = true;
     }
-
-    events = await res.json();
-  } catch (error) {
-    console.error("Failed to load events:", error);
-    apiError = true;
   }
-}
 
   return (
-    <main className="min-h-screen bg-[#F8F7F0] px-4 py-8 sm:px-6 md:py-12">
+    <main className="min-h-screen bg-background px-4 py-8 sm:px-6 md:py-12">
       <div className="mx-auto w-full max-w-5xl">
-        <h1 className="font-serif text-4xl font-bold text-[#14532D]">
+        <h1 className="font-serif text-4xl font-bold text-foreground">
           Manage Events
         </h1>
 
-        <p className="mt-2 text-sm text-[#647067]">
+        <p className="mt-2 text-sm text-muted-foreground">
           Edit or remove events you created.
         </p>
 
-        <div className="mt-6 overflow-hidden rounded-2xl border border-[#E3E1D6] bg-white">
+        <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card">
           {!userId ? (
             <div className="px-6 py-14 text-center">
-              <p className="text-sm text-[#647067]">
+              <p className="text-sm text-muted-foreground">
                 Please log in to manage your events.
               </p>
 
@@ -94,13 +96,13 @@ export default async function ManageEventsPage() {
             </div>
           ) : apiError ? (
             <div className="px-6 py-14 text-center">
-              <p className="text-sm text-red-600">
+              <p className="text-sm text-red-600 dark:text-red-400">
                 Could not load your events. Please try again later.
               </p>
             </div>
           ) : events.length === 0 ? (
             <div className="px-6 py-14 text-center">
-              <p className="text-sm text-[#647067]">
+              <p className="text-sm text-muted-foreground">
                 You haven&apos;t created any events yet.
               </p>
 
@@ -114,7 +116,7 @@ export default async function ManageEventsPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[640px] text-left text-sm">
-                <thead className="bg-[#EFEEE4] text-xs font-semibold text-[#647067]">
+                <thead className="bg-muted text-xs font-semibold text-muted-foreground">
                   <tr>
                     <th className="px-6 py-4">Title</th>
                     <th className="px-6 py-4">Category</th>
@@ -123,9 +125,12 @@ export default async function ManageEventsPage() {
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-[#E3E1D6] text-[#292524]">
+                <tbody className="divide-y divide-border text-foreground">
                   {events.map((event) => (
-                    <tr key={event._id}>
+                    <tr
+                      key={event._id}
+                      className="transition-colors hover:bg-muted/50"
+                    >
                       <td className="px-6 py-4 font-medium">
                         {event.title}
                       </td>

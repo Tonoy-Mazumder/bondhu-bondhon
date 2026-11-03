@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import {
   Package,
@@ -49,37 +50,44 @@ const categories = [
 
 export function EventCategories() {
   return (
-    <section className="bg-[#F8F7F0] border-t border-border/40">
+    <section className="border-t border-border bg-background">
       <div className="mx-auto w-full max-w-7xl px-4 py-16 md:px-6 md:py-20 lg:py-24">
         <div className="mx-auto max-w-xl text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight text-[#14532D] sm:text-4xl lg:text-5xl">
+          <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
             Find your kind of cause
           </h2>
-          <p className="mt-4 text-base text-[#647067]">
+
+          <p className="mt-4 text-base text-muted-foreground">
             Six ways to give back close to home.
           </p>
         </div>
 
         <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 md:mt-16 lg:grid-cols-4">
-          {categories.map((category) => (
-            <Link
-              key={category.title}
-              href={category.href}
-              className="rounded-xl border border-border/60 bg-white p-6 transition-shadow hover:shadow-md"
-            >
-              <span
-                className={`flex size-12 items-center justify-center rounded-xl ${category.iconBg}`}
+          {categories.map((category) => {
+            const Icon = category.icon;
+
+            return (
+              <Link
+                key={category.title}
+                href={category.href}
+                className="rounded-xl border border-border bg-card p-6 transition-all hover:-translate-y-1 hover:shadow-md"
               >
-                <category.icon className="size-5 text-[#14532D]" />
-              </span>
-              <h3 className="mt-5 text-xl font-extrabold text-[#14532D]">
-                {category.title}
-              </h3>
-              <p className="mt-1.5 text-sm text-[#647067]">
-                Find nearby events and join in.
-              </p>
-            </Link>
-          ))}
+                <span
+                  className={`flex size-12 items-center justify-center rounded-xl ${category.iconBg}`}
+                >
+                  <Icon className="size-5 text-[#14532D]" />
+                </span>
+
+                <h3 className="mt-5 text-xl font-extrabold text-foreground">
+                  {category.title}
+                </h3>
+
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  Find nearby events and join in.
+                </p>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>

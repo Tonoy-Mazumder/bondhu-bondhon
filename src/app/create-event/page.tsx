@@ -1,8 +1,10 @@
+
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { useState } from "react";
+import { toast } from "@/components/ui/toast";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
@@ -18,14 +20,26 @@ const EVENT_TYPES = [
 const fieldClass =
   "w-full rounded-lg border border-[#d6dfd5] bg-white px-4 py-3 text-sm text-[#292524] outline-none transition focus:border-[#14532D] focus:ring-2 focus:ring-[#14532D]/10";
 
-const labelClass =
-  "mb-2 block text-sm font-semibold text-[#292524]";
+const labelClass = "mb-2 block text-sm font-semibold text-[#292524]";
+
+// Get tomorrow's date
+function getTomorrowDate() {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const year = tomorrow.getFullYear();
+  const month = String(tomorrow.getMonth() + 1).padStart(2, "0");
+  const day = String(tomorrow.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
 
 export default function CreateEventPage() {
   const router = useRouter();
 
   const { data: session, isPending } = authClient.useSession();
 
+  const [minDate] = useState(getTomorrowDate);
   const [dateError, setDateError] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -47,16 +61,9 @@ export default function CreateEventPage() {
     const data = Object.fromEntries(formData.entries());
 
     // Date validation
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const selectedDate = String(data.date || "");
 
-    const selectedDate = new Date(`${data.date}T00:00:00`);
-
-    if (
-      !data.date ||
-      Number.isNaN(selectedDate.getTime()) ||
-      selectedDate <= today
-    ) {
+    if (!selectedDate || selectedDate < minDate) {
       setDateError(true);
       setError("Please select a future date for your event.");
       return;
@@ -80,7 +87,7 @@ export default function CreateEventPage() {
       category: data.category,
       image: data.image,
       location: data.location,
-      date: data.date,
+      date: selectedDate,
       capacity,
       joinedCount: 0,
       participants: [],
@@ -114,7 +121,10 @@ export default function CreateEventPage() {
       if (!res.ok) {
         throw new Error(result.message || "Failed to create event.");
       }
-
+      toast.add({
+        title: "Event created successfully!",
+        type: "success",
+      });
       router.push("/upcoming-events");
       router.refresh();
     } catch (err) {
@@ -260,9 +270,14 @@ export default function CreateEventPage() {
                   name="date"
                   type="date"
                   required
-                  onChange={() => setDateError(false)}
-                  className={`${fieldClass} ${dateError ? "border-red-500" : ""
-                    }`}
+                  min={minDate}
+                  onChange={() => {
+                    setDateError(false);
+                    setError("");
+                  }}
+                  className={`${fieldClass} ${
+                    dateError ? "border-red-500" : ""
+                  }`}
                 />
 
                 {dateError && (

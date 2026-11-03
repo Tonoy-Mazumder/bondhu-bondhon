@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
+import { authClient } from "@/lib/auth-client";
 const API = "http://localhost:5000";
 
 const EVENT_TYPES = [
@@ -56,71 +56,108 @@ export default function EventActions({
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
-  async function handleEdit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+async function handleEdit(e: React.FormEvent<HTMLFormElement>) {
+  e.preventDefault();
 
-    setSaving(true);
-    setEditError("");
+  setSaving(true);
+  setEditError("");
 
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData.entries());
+  const formData = new FormData(e.currentTarget);
+  const data = Object.fromEntries(formData.entries());
 
-    const capacity = Number(data.capacity);
+  // Validate capacity
+  const capacity = Number(data.capacity);
 
-    if (!Number.isInteger(capacity) || capacity < 1) {
-      setEditError("Please enter a valid participant capacity.");
-      setSaving(false);
-      return;
-    }
-
-    if (
-      event.joinedCount !== undefined &&
-      capacity < event.joinedCount
-    ) {
-      setEditError(
-        "Capacity cannot be less than the current number of participants."
-      );
-      setSaving(false);
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API}/events/${event._id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...data,
-          capacity,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to update event");
-      }
-
-      setEditOpen(false);
-      router.refresh();
-    } catch (error) {
-      console.error(error);
-      setEditError("Failed to update event. Please try again.");
-    } finally {
-      setSaving(false);
-    }
+  if (!Number.isInteger(capacity) || capacity < 1) {
+    setEditError("Please enter a valid participant capacity.");
+    setSaving(false);
+    return;
   }
+
+  // Validate participant capacity
+  if (
+    event.joinedCount !== undefined &&
+    capacity < event.joinedCount
+  ) {
+    setEditError(
+      "Capacity cannot be less than the current number of participants."
+    );
+    setSaving(false);
+    return;
+  }
+
+  // Validate event date
+  const selectedDate = new Date(`${data.date}T00:00:00`);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (!data.date || selectedDate < today || isNaN(selectedDate.getTime())) {
+    setEditError("Event date must be today or a future date.");
+    setSaving(false);
+    return;
+  }
+
+  try {
+    // Get JWT token
+    const { data: tokenData, error: tokenError } =
+      await authClient.token();
+
+    if (tokenError || !tokenData?.token) {
+      throw new Error("Authentication token not found");
+    }
+
+    // Update event
+    const res = await fetch(`${API}/events/${event._id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${tokenData.token}`,
+      },
+      body: JSON.stringify({
+        ...data,
+        capacity,
+      }),
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      throw new Error(result.message || "Failed to update event");
+    }
+
+    setEditOpen(false);
+    router.refresh();
+  } catch (error) {
+    console.error(error);
+    setEditError("Failed to update event. Please try again.");
+  } finally {
+    setSaving(false);
+  }
+}
 
   async function handleDelete() {
     setDeleting(true);
     setDeleteError("");
 
     try {
+      const { data: tokenData, error: tokenError } =
+        await authClient.token();
+
+      if (tokenError || !tokenData?.token) {
+        throw new Error("Authentication token not found");
+      }
+
       const res = await fetch(`${API}/events/${event._id}`, {
         method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${tokenData.token}`,
+        },
       });
 
+      const result = await res.json();
+
       if (!res.ok) {
-        throw new Error("Failed to delete event");
+        throw new Error(result.message || "Failed to delete event");
       }
 
       setDeleteOpen(false);
@@ -132,7 +169,6 @@ export default function EventActions({
       setDeleting(false);
     }
   }
-
   return (
     <>
       <div className="flex items-center gap-2">
@@ -283,6 +319,7 @@ export default function EventActions({
                 required
                 defaultValue={event.date?.slice(0, 10)}
                 className={fieldClass}
+                 min={new Date().toLocaleDateString("en-CA")}
               />
             </div>
 

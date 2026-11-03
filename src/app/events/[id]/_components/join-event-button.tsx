@@ -1,6 +1,4 @@
-
 "use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2 } from "lucide-react";
@@ -61,12 +59,18 @@ export function JoinEventButton({
     setStatus("joining");
 
     try {
+      const { data: tokenData, error: tokenError } =
+        await authClient.token();
+
+      if (tokenError || !tokenData?.token) {
+        throw new Error("Authentication token not found");
+      }
+
       const res = await fetch(`${API}/events/${eventId}/join`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          Authorization: `Bearer ${tokenData.token}`,
         },
-        body: JSON.stringify({ userId }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -102,12 +106,18 @@ export function JoinEventButton({
     setStatus("cancelling");
 
     try {
+      const { data: tokenData, error: tokenError } =
+        await authClient.token();
+
+      if (tokenError || !tokenData?.token) {
+        throw new Error("Authentication token not found");
+      }
+
       const res = await fetch(`${API}/events/${eventId}/join`, {
         method: "DELETE",
         headers: {
-          "Content-Type": "application/json",
+          Authorization: `Bearer ${tokenData.token}`,
         },
-        body: JSON.stringify({ userId }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -136,7 +146,6 @@ export function JoinEventButton({
       });
     }
   }
-
   return (
     <>
       <button
@@ -146,13 +155,12 @@ export function JoinEventButton({
           isJoined || isJoining || isCancelling || (isFull && !isJoined)
         }
         aria-live="polite"
-        className={`h-11 w-full rounded-lg text-sm font-semibold transition-all duration-300 disabled:cursor-not-allowed ${
-          isJoined || isCancelling
+        className={`h-11 w-full rounded-lg text-sm font-semibold transition-all duration-300 disabled:cursor-not-allowed ${isJoined || isCancelling
             ? "bg-[#D9F99D] text-[#14532D]"
             : isFull
               ? "bg-[#E3E1D6] text-[#647067]"
               : "bg-[#14532D] text-white hover:bg-[#14532D]/90 active:scale-95"
-        }`}
+          }`}
       >
         {isJoined ? (
           <span className="inline-flex items-center justify-center gap-2">

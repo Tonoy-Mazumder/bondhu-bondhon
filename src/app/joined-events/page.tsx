@@ -4,6 +4,9 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+const API =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 interface IEvent {
   _id: string;
   title: string;
@@ -14,25 +17,49 @@ interface IEvent {
 }
 
 export default async function JoinedEventsPage() {
+  const requestHeaders = await headers();
+
   const session = await auth.api.getSession({
-    headers: await headers(),
+    headers: requestHeaders,
   });
 
   if (!session) redirect("/sign-in");
 
   let events: IEvent[] = [];
+  let apiError = false;
 
   try {
-    const res = await fetch(
-      `http://localhost:5000/joined-events?userId=${session.user.id}`,
-      { cache: "no-store" }
-    );
+    // Generate JWT
+    const { token } = await auth.api.getToken({
+      headers: requestHeaders,
+    });
 
-    if (res.ok) {
-      events = await res.json();
+    if (!token) {
+      throw new Error("Authentication token not found");
     }
+
+    // Fetch joined events
+    const res = await fetch(`${API}/joined-events`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch joined events");
+    }
+
+    events = await res.json();
+
+    // Sort events by date
+    events.sort(
+      (a, b) =>
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
   } catch (error) {
     console.error("Failed to fetch joined events:", error);
+    apiError = true;
   }
 
   return (
@@ -46,14 +73,25 @@ export default async function JoinedEventsPage() {
           Events you've signed up for, soonest first.
         </p>
 
-        {events.length === 0 ? (
+        {apiError ? (
+          <div className="rounded-2xl border border-red-200 bg-white p-12 text-center">
+            <h2 className="text-xl font-semibold text-red-600">
+              Failed to load events
+            </h2>
+            <p className="mt-2 text-sm text-gray-500">
+              Please try again later.
+            </p>
+          </div>
+        ) : events.length === 0 ? (
           <div className="rounded-2xl border bg-white p-12 text-center">
             <h2 className="text-xl font-semibold text-[#14532D]">
               No joined events yet
             </h2>
+
             <p className="mt-2 text-sm text-gray-500">
               Explore upcoming events and join a community activity.
             </p>
+
             <Link
               href="/upcoming-events"
               className="mt-5 inline-block rounded-lg bg-[#14532D] px-6 py-3 text-white"
@@ -96,11 +134,14 @@ export default async function JoinedEventsPage() {
                   </p>
 
                   <p className="mt-2 text-sm text-[#647067]">
-                    {new Date(event.date).toLocaleDateString("en-US", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
+                    {new Date(`${event.date}T00:00:00`).toLocaleDateString(
+                      "en-US",
+                      {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      }
+                    )}
                   </p>
 
                   <Link

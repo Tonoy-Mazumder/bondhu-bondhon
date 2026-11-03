@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, MapPin } from "lucide-react";
 import { JoinEventButton } from "./_components/join-event-button";
 import type { IEventItem } from "@/app/types/Events";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 type EventDetailsPageProps = {
   params: Promise<{ id: string }>;
@@ -42,6 +44,9 @@ export async function generateMetadata({ params }: EventDetailsPageProps) {
 }
 
 const EventDetailsPage = async ({ params }: EventDetailsPageProps) => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
   const { id } = await params;
   const event = await loadEvent(id);
   if (!event) notFound();
@@ -122,9 +127,13 @@ const EventDetailsPage = async ({ params }: EventDetailsPageProps) => {
 
               {/* join event — client button; toast + joined state handled inside */}
               <JoinEventButton
+                eventId={String(event._id)}
                 title={event.title}
-                joinedCount={event.joinedCount}
-                capacity={event.capacity}
+                joinedCount={event.joinedCount ?? 0}
+                initialJoined={
+                  event.participants?.includes(session?.user?.id ?? "") ?? false
+                }
+                capacity={event.capacity ?? 0}
               />
             </div>
           </aside>

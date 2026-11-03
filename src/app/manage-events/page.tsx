@@ -1,16 +1,14 @@
+
 import Link from "next/link";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import EventActions from "./event-actions";
 
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
-
 type EventItem = {
   _id: string;
   title: string;
   description?: string;
-  type?: string | null;
+  category?: string | null;
   image?: string | null;
   location?: string;
   date: string;
@@ -18,7 +16,9 @@ type EventItem = {
 
 function formatDate(value: string) {
   const d = new Date(value);
+
   if (Number.isNaN(d.getTime())) return "-";
+
   return d.toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
@@ -27,15 +27,31 @@ function formatDate(value: string) {
 }
 
 export default async function ManageEventsPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
   const userId = session?.user?.id;
 
   let events: EventItem[] = [];
+  let apiError = false;
+
   if (userId) {
-    const res = await fetch(`${API}/my-events?userId=${userId}`, {
-      cache: "no-store",
-    });
-    events = await res.json();
+    try {
+      const res = await fetch(
+        `http://localhost:5000/my-events?userId=${encodeURIComponent(userId)}`,
+        { cache: "no-store" }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch events");
+      }
+
+      events = await res.json();
+    } catch (error) {
+      console.error("Failed to load events:", error);
+      apiError = true;
+    }
   }
 
   return (
@@ -44,6 +60,7 @@ export default async function ManageEventsPage() {
         <h1 className="font-serif text-4xl font-bold text-[#14532D]">
           Manage Events
         </h1>
+
         <p className="mt-2 text-sm text-[#647067]">
           Edit or remove events you created.
         </p>
@@ -54,18 +71,26 @@ export default async function ManageEventsPage() {
               <p className="text-sm text-[#647067]">
                 Please log in to manage your events.
               </p>
+
               <Link
-                href="/login"
+                href="/sign-in"
                 className="mt-4 inline-flex h-10 items-center rounded-lg bg-[#14532D] px-5 text-sm font-medium text-white hover:bg-[#14532D]/90"
               >
                 Log in
               </Link>
+            </div>
+          ) : apiError ? (
+            <div className="px-6 py-14 text-center">
+              <p className="text-sm text-red-600">
+                Could not load your events. Please try again later.
+              </p>
             </div>
           ) : events.length === 0 ? (
             <div className="px-6 py-14 text-center">
               <p className="text-sm text-[#647067]">
                 You haven&apos;t created any events yet.
               </p>
+
               <Link
                 href="/create-event"
                 className="mt-4 inline-flex h-10 items-center rounded-lg bg-[#14532D] px-5 text-sm font-medium text-white hover:bg-[#14532D]/90"
@@ -79,17 +104,27 @@ export default async function ManageEventsPage() {
                 <thead className="bg-[#EFEEE4] text-xs font-semibold text-[#647067]">
                   <tr>
                     <th className="px-6 py-4">Title</th>
-                    <th className="px-6 py-4">Type</th>
+                    <th className="px-6 py-4">Category</th>
                     <th className="px-6 py-4">Date</th>
                     <th className="px-6 py-4">Actions</th>
                   </tr>
                 </thead>
+
                 <tbody className="divide-y divide-[#E3E1D6] text-[#292524]">
                   {events.map((event) => (
                     <tr key={event._id}>
-                      <td className="px-6 py-4 font-medium">{event.title}</td>
-                      <td className="px-6 py-4">{event.type || "-"}</td>
-                      <td className="px-6 py-4">{formatDate(event.date)}</td>
+                      <td className="px-6 py-4 font-medium">
+                        {event.title}
+                      </td>
+
+                      <td className="px-6 py-4">
+                        {event.category || "-"}
+                      </td>
+
+                      <td className="px-6 py-4">
+                        {formatDate(event.date)}
+                      </td>
+
                       <td className="px-6 py-4">
                         <EventActions event={event} />
                       </td>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -12,7 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
+const API = "http://localhost:5000";
 
 const EVENT_TYPES = [
   "Tree Plantation",
@@ -32,13 +33,19 @@ type EventItem = {
   _id: string;
   title: string;
   description?: string;
-  type?: string | null;
+  category?: string | null;
   image?: string | null;
   location?: string;
   date: string;
+  capacity?: number;
+  joinedCount?: number;
 };
 
-export default function EventActions({ event }: { event: EventItem }) {
+export default function EventActions({
+  event,
+}: {
+  event: EventItem;
+}) {
   const router = useRouter();
 
   const [editOpen, setEditOpen] = useState(false);
@@ -51,21 +58,53 @@ export default function EventActions({ event }: { event: EventItem }) {
 
   async function handleEdit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
     setSaving(true);
     setEditError("");
 
-    const data = Object.fromEntries(new FormData(e.currentTarget));
+    const formData = new FormData(e.currentTarget);
+    const data = Object.fromEntries(formData.entries());
+
+    const capacity = Number(data.capacity);
+
+    if (!Number.isInteger(capacity) || capacity < 1) {
+      setEditError("Please enter a valid participant capacity.");
+      setSaving(false);
+      return;
+    }
+
+    if (
+      event.joinedCount !== undefined &&
+      capacity < event.joinedCount
+    ) {
+      setEditError(
+        "Capacity cannot be less than the current number of participants."
+      );
+      setSaving(false);
+      return;
+    }
 
     try {
-      await fetch(`${API}/events/${event._id}`, {
+      const res = await fetch(`${API}/events/${event._id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...data,
+          capacity,
+        }),
       });
+
+      if (!res.ok) {
+        throw new Error("Failed to update event");
+      }
+
       setEditOpen(false);
-      router.refresh(); // server page fetches the list again
-    } catch {
-      setEditError("Failed to update event.");
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      setEditError("Failed to update event. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -76,11 +115,19 @@ export default function EventActions({ event }: { event: EventItem }) {
     setDeleteError("");
 
     try {
-      await fetch(`${API}/events/${event._id}`, { method: "DELETE" });
+      const res = await fetch(`${API}/events/${event._id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to delete event");
+      }
+
       setDeleteOpen(false);
       router.refresh();
-    } catch {
-      setDeleteError("Failed to delete event.");
+    } catch (error) {
+      console.error(error);
+      setDeleteError("Failed to delete event. Please try again.");
     } finally {
       setDeleting(false);
     }
@@ -91,14 +138,21 @@ export default function EventActions({ event }: { event: EventItem }) {
       <div className="flex items-center gap-2">
         <button
           type="button"
-          onClick={() => setEditOpen(true)}
+          onClick={() => {
+            setEditError("");
+            setEditOpen(true);
+          }}
           className="inline-flex h-10 items-center rounded-lg border border-[#D6D3C9] bg-white px-4 text-xs font-semibold text-[#14532D] transition-colors hover:bg-[#F8F7F0]"
         >
           Edit
         </button>
+
         <button
           type="button"
-          onClick={() => setDeleteOpen(true)}
+          onClick={() => {
+            setDeleteError("");
+            setDeleteOpen(true);
+          }}
           className="inline-flex h-10 items-center rounded-lg border border-[#D6D3C9] bg-white px-4 text-xs font-semibold text-[#B42318] transition-colors hover:bg-red-50"
         >
           Delete
@@ -106,20 +160,30 @@ export default function EventActions({ event }: { event: EventItem }) {
       </div>
 
       {/* Edit dialog */}
-      <Dialog open={editOpen} onOpenChange={(o) => !saving && setEditOpen(o)}>
+      <Dialog
+        open={editOpen}
+        onOpenChange={(open) => !saving && setEditOpen(open)}
+      >
         <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-serif text-2xl text-[#14532D]">
               Edit event
             </DialogTitle>
-            <DialogDescription>Update the details of your event.</DialogDescription>
+
+            <DialogDescription>
+              Update the details of your event.
+            </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleEdit} className="space-y-4">
             <div>
-              <label htmlFor={`title-${event._id}`} className={labelClass}>
+              <label
+                htmlFor={`title-${event._id}`}
+                className={labelClass}
+              >
                 Event title
               </label>
+
               <input
                 id={`title-${event._id}`}
                 name="title"
@@ -130,41 +194,53 @@ export default function EventActions({ event }: { event: EventItem }) {
             </div>
 
             <div>
-              <label htmlFor={`description-${event._id}`} className={labelClass}>
+              <label
+                htmlFor={`description-${event._id}`}
+                className={labelClass}
+              >
                 Description
               </label>
+
               <textarea
                 id={`description-${event._id}`}
                 name="description"
                 required
                 rows={4}
-                defaultValue={event.description}
+                defaultValue={event.description ?? ""}
                 className={fieldClass}
               />
             </div>
 
             <div>
-              <label htmlFor={`type-${event._id}`} className={labelClass}>
-                Event type
+              <label
+                htmlFor={`category-${event._id}`}
+                className={labelClass}
+              >
+                Event category
               </label>
+
               <select
-                id={`type-${event._id}`}
-                name="type"
-                defaultValue={event.type ?? EVENT_TYPES[0]}
+                id={`category-${event._id}`}
+                name="category"
+                defaultValue={event.category ?? EVENT_TYPES[0]}
                 className={fieldClass}
               >
-                {EVENT_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
+                {EVENT_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
                   </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label htmlFor={`image-${event._id}`} className={labelClass}>
+              <label
+                htmlFor={`image-${event._id}`}
+                className={labelClass}
+              >
                 Image URL
               </label>
+
               <input
                 id={`image-${event._id}`}
                 name="image"
@@ -176,28 +252,55 @@ export default function EventActions({ event }: { event: EventItem }) {
             </div>
 
             <div>
-              <label htmlFor={`location-${event._id}`} className={labelClass}>
+              <label
+                htmlFor={`location-${event._id}`}
+                className={labelClass}
+              >
                 Location
               </label>
+
               <input
                 id={`location-${event._id}`}
                 name="location"
                 required
-                defaultValue={event.location}
+                defaultValue={event.location ?? ""}
                 className={fieldClass}
               />
             </div>
 
             <div>
-              <label htmlFor={`date-${event._id}`} className={labelClass}>
+              <label
+                htmlFor={`date-${event._id}`}
+                className={labelClass}
+              >
                 Event date
               </label>
+
               <input
                 id={`date-${event._id}`}
                 name="date"
                 type="date"
                 required
                 defaultValue={event.date?.slice(0, 10)}
+                className={fieldClass}
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor={`capacity-${event._id}`}
+                className={labelClass}
+              >
+                Maximum participants
+              </label>
+
+              <input
+                id={`capacity-${event._id}`}
+                name="capacity"
+                type="number"
+                min={Math.max(1, event.joinedCount ?? 0)}
+                required
+                defaultValue={event.capacity ?? 50}
                 className={fieldClass}
               />
             </div>
@@ -218,6 +321,7 @@ export default function EventActions({ event }: { event: EventItem }) {
               >
                 Cancel
               </Button>
+
               <Button
                 type="submit"
                 disabled={saving}
@@ -231,12 +335,16 @@ export default function EventActions({ event }: { event: EventItem }) {
       </Dialog>
 
       {/* Delete dialog */}
-      <Dialog open={deleteOpen} onOpenChange={(o) => !deleting && setDeleteOpen(o)}>
+      <Dialog
+        open={deleteOpen}
+        onOpenChange={(open) => !deleting && setDeleteOpen(open)}
+      >
         <DialogContent className="rounded-2xl sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="font-serif text-2xl text-[#14532D]">
               Delete this event?
             </DialogTitle>
+
             <DialogDescription>
               This can&apos;t be undone. People who joined will no longer see it.
             </DialogDescription>
@@ -262,6 +370,7 @@ export default function EventActions({ event }: { event: EventItem }) {
             >
               Cancel
             </Button>
+
             <Button
               type="button"
               onClick={handleDelete}

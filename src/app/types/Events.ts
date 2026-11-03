@@ -10,4 +10,5 @@ export type IEventItem = {
   capacity: number;
   joinedCount: number;
   status: string;
+  participants?: string[];
 };

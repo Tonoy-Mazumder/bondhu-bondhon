@@ -104,7 +104,7 @@ export default async function JoinedEventsPage() {
                   </p>
 
                   <Link
-                    href={`/upcoming-events/${event._id}`}
+                    href={`/events/${event._id}`}
                     className="mt-3 block rounded-xl bg-[#14532D] py-3 text-center text-sm font-semibold text-white hover:bg-[#166534]"
                   >
                     View Event

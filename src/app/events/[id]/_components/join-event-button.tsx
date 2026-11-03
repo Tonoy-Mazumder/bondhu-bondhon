@@ -7,8 +7,7 @@ import { CheckCircle2, Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "@/components/ui/toast";
 
-const API =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 type JoinEventButtonProps = {
   eventId: string;
@@ -55,7 +54,7 @@ export function JoinEventButton({
         type: "error",
       });
 
-      router.push("/sign-in");
+      router.push("/login");
       return;
     }
 

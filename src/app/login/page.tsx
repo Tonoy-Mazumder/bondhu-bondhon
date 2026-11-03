@@ -34,9 +34,22 @@ export default function LoginPage() {
             setSubmitting(false);
             return;
         }
+        else {
+            const { data: tokenData, error: tokenError } =
+                await authClient.token();
 
-        router.push("/");
-        router.refresh();
+            if (tokenError || !tokenData?.token) {
+                console.error("JWT error:", tokenError);
+                setError("Could not generate authentication token.");
+                setSubmitting(false);
+                return;
+            }
+
+            console.log("JWT:", tokenData.token);
+
+            router.push("/");
+            router.refresh();
+        }
     }
 
     async function handleGoogle() {

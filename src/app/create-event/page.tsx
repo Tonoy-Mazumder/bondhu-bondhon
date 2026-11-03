@@ -92,20 +92,27 @@ export default function CreateEventPage() {
     try {
       setSubmitting(true);
 
+      // Generate JWT
+      const { data: tokenData, error: tokenError } =
+        await authClient.token();
+
+      if (tokenError || !tokenData?.token) {
+        throw new Error("Authentication token পাওয়া যায়নি।");
+      }
+
       const res = await fetch(`${API}/create-events`, {
         method: "POST",
-        credentials: "include",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${tokenData.token}`,
         },
         body: JSON.stringify(eventData),
       });
+
       const result = await res.json();
 
       if (!res.ok) {
-        throw new Error(
-          result.message || "Failed to create event."
-        );
+        throw new Error(result.message || "Failed to create event.");
       }
 
       router.push("/upcoming-events");

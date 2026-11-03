@@ -37,22 +37,35 @@ export default async function ManageEventsPage() {
   let apiError = false;
 
   if (userId) {
-    try {
-      const res = await fetch(
-        `http://localhost:5000/my-events?userId=${encodeURIComponent(userId)}`,
-        { cache: "no-store" }
-      );
+  try {
+    const { token } = await auth.api.getToken({
+      headers: await headers(),
+    });
 
-      if (!res.ok) {
-        throw new Error("Failed to fetch events");
-      }
-
-      events = await res.json();
-    } catch (error) {
-      console.error("Failed to load events:", error);
-      apiError = true;
+    if (!token) {
+      throw new Error("Authentication token not found");
     }
+
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/my-events`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch events");
+    }
+
+    events = await res.json();
+  } catch (error) {
+    console.error("Failed to load events:", error);
+    apiError = true;
   }
+}
 
   return (
     <main className="min-h-screen bg-[#F8F7F0] px-4 py-8 sm:px-6 md:py-12">

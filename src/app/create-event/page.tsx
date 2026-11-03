@@ -6,14 +6,16 @@ import { authClient } from "@/lib/auth-client";
 import { useState } from "react";
 import { toast } from "@/components/ui/toast";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 const EVENT_TYPES = [
-  "Tree Plantation",
-  "Clean-up Drive",
-  "Blood Donation",
-  "Food Distribution",
-  "Education Support",
+  "Environment",
+  "Community Service",
+  "Education",
+  "Health",
+  "Donation",
+  "Animal Welfare",
   "Other",
 ];
 
@@ -33,6 +35,15 @@ function getTomorrowDate() {
   return `${year}-${month}-${day}`;
 }
 
+function isValidImageUrl(value: string) {
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
 export default function CreateEventPage() {
   const router = useRouter();
 
@@ -43,8 +54,12 @@ export default function CreateEventPage() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    e: React.FormEvent<HTMLFormElement>
+  ) {
     e.preventDefault();
+
+    if (submitting) return;
 
     setError("");
     setDateError(false);
@@ -55,17 +70,65 @@ export default function CreateEventPage() {
     }
 
     const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData.entries());
 
-    const selectedDate = String(data.date || "");
+    const title = String(formData.get("title") || "").trim();
+    const description = String(
+      formData.get("description") || ""
+    ).trim();
+    const category = String(formData.get("category") || "");
+    const image = String(formData.get("image") || "").trim();
+    const location = String(
+      formData.get("location") || ""
+    ).trim();
+    const selectedDate = String(formData.get("date") || "");
+    const capacityValue = String(
+      formData.get("capacity") || ""
+    );
 
+    // Title validation
+    if (title.length < 3) {
+      setError("Event title must be at least 3 characters.");
+      return;
+    }
+
+    // Description validation
+    if (description.length < 10) {
+      setError("Description must be at least 10 characters.");
+      return;
+    }
+
+    // Category validation
+    if (!EVENT_TYPES.includes(category)) {
+      setError("Please select a valid event category.");
+      return;
+    }
+
+    // Image URL validation
+    if (!isValidImageUrl(image)) {
+      setError("Please enter a valid HTTP or HTTPS image URL.");
+      return;
+    }
+
+    // Location validation
+    if (location.length < 3) {
+      setError("Please enter a valid event location.");
+      return;
+    }
+
+    // Date validation
     if (!selectedDate || selectedDate < minDate) {
       setDateError(true);
       setError("Please select a future date for your event.");
       return;
     }
 
-    const capacity = Number(data.capacity);
+    // Capacity validation
+    if (!capacityValue.trim()) {
+      setError("Please enter the maximum participants.");
+      return;
+    }
+
+    const capacity = Number(capacityValue);
 
     if (
       !Number.isInteger(capacity) ||
@@ -77,18 +140,13 @@ export default function CreateEventPage() {
     }
 
     const eventData = {
-      title: data.title,
-      description: data.description,
-      category: data.category,
-      image: data.image,
-      location: data.location,
+      title,
+      description,
+      category,
+      image,
+      location,
       date: selectedDate,
       capacity,
-      joinedCount: 0,
-      participants: [],
-      organizerId: session.user.id,
-      organizerName: session.user.name,
-      createdAt: new Date().toISOString(),
     };
 
     try {
@@ -110,10 +168,12 @@ export default function CreateEventPage() {
         body: JSON.stringify(eventData),
       });
 
-      const result = await res.json();
+      const result = await res.json().catch(() => null);
 
       if (!res.ok) {
-        throw new Error(result.message || "Failed to create event.");
+        throw new Error(
+          result?.message || "Failed to create event."
+        );
       }
 
       toast.add({
@@ -161,6 +221,7 @@ export default function CreateEventPage() {
 
         <div className="rounded-2xl border border-border bg-card p-5 shadow-sm md:p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Title */}
             <div>
               <label htmlFor="title" className={labelClass}>
                 Event Title
@@ -177,6 +238,7 @@ export default function CreateEventPage() {
               />
             </div>
 
+            {/* Description */}
             <div>
               <label htmlFor="description" className={labelClass}>
                 Description
@@ -193,6 +255,7 @@ export default function CreateEventPage() {
               />
             </div>
 
+            {/* Category */}
             <div>
               <label htmlFor="category" className={labelClass}>
                 Event Category
@@ -217,6 +280,7 @@ export default function CreateEventPage() {
               </select>
             </div>
 
+            {/* Image */}
             <div>
               <label htmlFor="image" className={labelClass}>
                 Event Image URL
@@ -232,6 +296,7 @@ export default function CreateEventPage() {
               />
             </div>
 
+            {/* Location */}
             <div>
               <label htmlFor="location" className={labelClass}>
                 Event Location
@@ -247,6 +312,7 @@ export default function CreateEventPage() {
               />
             </div>
 
+            {/* Date and Capacity */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
                 <label htmlFor="date" className={labelClass}>
@@ -263,9 +329,8 @@ export default function CreateEventPage() {
                     setDateError(false);
                     setError("");
                   }}
-                  className={`${fieldClass} ${
-                    dateError ? "border-red-500" : ""
-                  }`}
+                  className={`${fieldClass} ${dateError ? "border-red-500" : ""
+                    }`}
                 />
 
                 {dateError && (
@@ -287,18 +352,24 @@ export default function CreateEventPage() {
                   placeholder="e.g. 100"
                   min="1"
                   max="10000"
+                  step="1"
                   required
                   className={fieldClass}
                 />
               </div>
             </div>
 
+            {/* Error */}
             {error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
+              <div
+                role="alert"
+                className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400"
+              >
                 {error}
               </div>
             )}
 
+            {/* Submit */}
             <button
               type="submit"
               disabled={submitting || !session?.user}

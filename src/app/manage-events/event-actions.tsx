@@ -18,11 +18,12 @@ import { toast } from "@/components/ui/toast";
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 const EVENT_TYPES = [
-  "Tree Plantation",
-  "Clean-up Drive",
-  "Blood Donation",
-  "Food Distribution",
-  "Education Support",
+  "Environment",
+  "Community Service",
+  "Education",
+  "Health",
+  "Donation",
+  "Animal Welfare",
   "Other",
 ];
 

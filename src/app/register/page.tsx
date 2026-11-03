@@ -17,6 +17,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function RegisterPage() {
   const router = useRouter();
+
   const [error, setError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -28,7 +29,36 @@ export default function RegisterPage() {
     return ok;
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function validatePassword(value: string) {
+    if (value.length < 6) {
+      return "Password must be at least 6 characters";
+    }
+
+    if (!/[A-Z]/.test(value)) {
+      return "Password must contain an uppercase letter";
+    }
+
+    if (!/[a-z]/.test(value)) {
+      return "Password must contain a lowercase letter";
+    }
+
+    return "";
+  }
+
+  function validateImageUrl(value: string) {
+    if (!value.trim()) return true;
+
+    try {
+      const url = new URL(value.trim());
+      return url.protocol === "https:" || url.protocol === "http:";
+    } catch {
+      return false;
+    }
+  }
+
+  async function handleSubmit(
+    e: React.FormEvent<HTMLFormElement>
+  ) {
     e.preventDefault();
     setError("");
 
@@ -36,7 +66,24 @@ export default function RegisterPage() {
       new FormData(e.currentTarget)
     ) as Record<string, string>;
 
+    if (!data.name?.trim()) {
+      setError("Please enter your name");
+      return;
+    }
+
     if (!validateEmail(data.email ?? "")) return;
+
+    const passwordError = validatePassword(data.password ?? "");
+
+    if (passwordError) {
+      setError(passwordError);
+      return;
+    }
+
+    if (!validateImageUrl(data.image ?? "")) {
+      setError("Please enter a valid photo URL");
+      return;
+    }
 
     setSubmitting(true);
 
@@ -45,12 +92,15 @@ export default function RegisterPage() {
         name: data.name.trim(),
         email: data.email.trim(),
         password: data.password,
-        ...(data.image?.trim() ? { image: data.image.trim() } : {}),
+        ...(data.image?.trim()
+          ? { image: data.image.trim() }
+          : {}),
       });
 
       if (error) {
         throw new Error(
-          error.message ?? "Could not create your account. Please try again."
+          error.message ??
+            "Could not create your account. Please try again."
         );
       }
 
@@ -70,10 +120,18 @@ export default function RegisterPage() {
   }
 
   async function handleGoogle() {
-    await authClient.signIn.social({
-      provider: "google",
-      callbackURL: "/",
-    });
+    try {
+      setSubmitting(true);
+
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
+    } catch (error) {
+      console.error(error);
+      setError("Google sign-in failed. Please try again.");
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -130,6 +188,7 @@ export default function RegisterPage() {
             noValidate
             className="mt-5 space-y-4"
           >
+            {/* Name */}
             <div>
               <label htmlFor="name" className={labelClass}>
                 Name
@@ -146,6 +205,7 @@ export default function RegisterPage() {
               />
             </div>
 
+            {/* Email */}
             <div>
               <label htmlFor="email" className={labelClass}>
                 Email
@@ -159,7 +219,9 @@ export default function RegisterPage() {
                 autoComplete="email"
                 placeholder="you@example.com"
                 aria-invalid={!!emailError}
-                aria-describedby={emailError ? "email-error" : undefined}
+                aria-describedby={
+                  emailError ? "email-error" : undefined
+                }
                 onBlur={(e) =>
                   e.target.value && validateEmail(e.target.value)
                 }
@@ -177,6 +239,7 @@ export default function RegisterPage() {
               )}
             </div>
 
+            {/* Photo URL */}
             <div>
               <label htmlFor="image" className={labelClass}>
                 Photo URL
@@ -191,6 +254,7 @@ export default function RegisterPage() {
               />
             </div>
 
+            {/* Password */}
             <div>
               <label htmlFor="password" className={labelClass}>
                 Password
@@ -202,22 +266,30 @@ export default function RegisterPage() {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   required
-                  minLength={8}
+                  minLength={6}
                   autoComplete="new-password"
+                  placeholder="At least 6 characters"
                   className={`${fieldClass} pr-16`}
                 />
 
                 <button
                   type="button"
                   onClick={() => setShowPassword((s) => !s)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={
+                    showPassword ? "Hide password" : "Show password"
+                  }
                   className="absolute inset-y-0 right-4 text-xs text-muted-foreground hover:text-foreground"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
               </div>
+
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Must contain uppercase and lowercase letters.
+              </p>
             </div>
 
+            {/* Error */}
             {error && (
               <p
                 role="alert"
@@ -227,6 +299,7 @@ export default function RegisterPage() {
               </p>
             )}
 
+            {/* Submit */}
             <button
               type="submit"
               disabled={submitting}
@@ -239,10 +312,12 @@ export default function RegisterPage() {
               or
             </p>
 
+            {/* Google */}
             <button
               type="button"
               onClick={handleGoogle}
-              className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D9F99D]"
+              disabled={submitting}
+              className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D9F99D] disabled:cursor-not-allowed disabled:opacity-60"
             >
               Continue with Google
             </button>

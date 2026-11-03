@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { authClient, signIn } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 import Image from "next/image";
 import communityPhoto from "@/assets/Together for a Greener Tomorrow.png";
 
@@ -13,30 +13,59 @@ const fieldClass =
 
 const labelClass = "mb-2 block text-sm font-semibold text-foreground";
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function LoginPage() {
   const router = useRouter();
+
   const [error, setError] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function validateEmail(value: string) {
+    const valid = emailRegex.test(value.trim());
+
+    setEmailError(
+      valid ? "" : "Please enter a valid email address"
+    );
+
+    return valid;
+  }
+
+  async function handleSubmit(
+    e: React.FormEvent<HTMLFormElement>
+  ) {
     e.preventDefault();
+
     setError("");
+    setEmailError("");
+
+    const data = Object.fromEntries(
+      new FormData(e.currentTarget)
+    ) as Record<string, string>;
+
+    if (!validateEmail(data.email ?? "")) {
+      return;
+    }
+
+    if (!data.password?.trim()) {
+      setError("Please enter your password");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
-      const data = Object.fromEntries(
-        new FormData(e.currentTarget)
-      ) as Record<string, string>;
-
       const { error } = await authClient.signIn.email({
-        email: data.email,
+        email: data.email.trim(),
         password: data.password,
       });
 
       if (error) {
         throw new Error(
-          error.message ?? "Could not log in. Check your email and password."
+          error.message ??
+            "Could not log in. Check your email and password."
         );
       }
 
@@ -47,7 +76,6 @@ export default function LoginPage() {
         throw new Error("Could not generate authentication token.");
       }
 
-      // Do not log authentication tokens.
       router.push("/");
       router.refresh();
     } catch (error) {
@@ -64,7 +92,20 @@ export default function LoginPage() {
   }
 
   async function handleGoogle() {
-    await signIn.social({ provider: "google", callbackURL: "/" });
+    setError("");
+    setSubmitting(true);
+
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
+    } catch (error) {
+      console.error(error);
+
+      setError("Google login failed. Please try again.");
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -116,7 +157,12 @@ export default function LoginPage() {
             Log in to join and manage community events.
           </p>
 
-          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+          <form
+            onSubmit={handleSubmit}
+            noValidate
+            className="mt-5 space-y-4"
+          >
+            {/* Email */}
             <div>
               <label htmlFor="email" className={labelClass}>
                 Email
@@ -129,10 +175,26 @@ export default function LoginPage() {
                 required
                 autoComplete="email"
                 placeholder="you@example.com"
+                aria-invalid={!!emailError}
                 className={fieldClass}
+                onBlur={(e) => {
+                  if (e.target.value) {
+                    validateEmail(e.target.value);
+                  }
+                }}
+                onChange={() => {
+                  if (emailError) setEmailError("");
+                }}
               />
+
+              {emailError && (
+                <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                  {emailError}
+                </p>
+              )}
             </div>
 
+            {/* Password */}
             <div>
               <label htmlFor="password" className={labelClass}>
                 Password
@@ -145,13 +207,16 @@ export default function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   required
                   autoComplete="current-password"
+                  placeholder="Enter your password"
                   className={`${fieldClass} pr-16`}
                 />
 
                 <button
                   type="button"
                   onClick={() => setShowPassword((s) => !s)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={
+                    showPassword ? "Hide password" : "Show password"
+                  }
                   className="absolute inset-y-0 right-4 text-xs text-muted-foreground hover:text-foreground"
                 >
                   {showPassword ? "Hide" : "Show"}
@@ -159,6 +224,7 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/* Error */}
             {error && (
               <p
                 role="alert"
@@ -168,6 +234,7 @@ export default function LoginPage() {
               </p>
             )}
 
+            {/* Submit */}
             <button
               type="submit"
               disabled={submitting}
@@ -176,12 +243,16 @@ export default function LoginPage() {
               {submitting ? "Logging in..." : "Log in"}
             </button>
 
-            <p className="text-center text-sm text-muted-foreground">or</p>
+            <p className="text-center text-sm text-muted-foreground">
+              or
+            </p>
 
+            {/* Google */}
             <button
               type="button"
               onClick={handleGoogle}
-              className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D9F99D]"
+              disabled={submitting}
+              className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D9F99D] disabled:cursor-not-allowed disabled:opacity-60"
             >
               Continue with Google
             </button>

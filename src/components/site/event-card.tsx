@@ -1,4 +1,5 @@
 
+import Image from "next/image";
 import Link from "next/link";
 import { CalendarDays, MapPin } from "lucide-react";
 import type { IEventItem } from "@/app/types/Events";
@@ -20,10 +21,12 @@ export function EventCard({ event }: { event: IEventItem }) {
     <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
       {event.image ? (
         <div className="relative h-48 w-full shrink-0 overflow-hidden border-b border-border">
-          <img
+          <Image
             src={event.image}
             alt={event.title}
-            className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+            fill
+            sizes="(min-width: 1280px) 290px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            className="object-cover transition-transform duration-500 hover:scale-105"
           />
         </div>
       ) : (

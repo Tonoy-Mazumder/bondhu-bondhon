@@ -1,5 +1,6 @@
 
 import Link from "next/link";
+import Image from "next/image";
 
 const API =
     process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -169,11 +170,15 @@ export default async function CategoryPage({
                                 className="overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-lg"
                             >
                                 {event.image ? (
-                                    <img
-                                        src={event.image}
-                                        alt={event.title}
-                                        className="h-52 w-full object-cover"
-                                    />
+                                    <div className="relative h-52 w-full">
+                                        <Image
+                                            src={event.image}
+                                            alt={event.title}
+                                            fill
+                                            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                                            className="object-cover"
+                                        />
+                                    </div>
                                 ) : (
                                     <div className="flex h-52 items-center justify-center bg-muted text-muted-foreground">
                                         No image available

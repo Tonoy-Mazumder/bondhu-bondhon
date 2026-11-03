@@ -1,8 +1,6 @@
 
-import Image from "next/image";
 import Link from "next/link";
-import heroPhoto from "@/assets/Young Volunteers Planting a Community Tree.png";
-import { Button } from "@/components/ui/button";
+import { HeroVisual } from "./hero-visual";
 
 const stats = [
   { value: "1,200", label: "Community events" },
@@ -33,60 +31,24 @@ export function Hero() {
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Link href="/upcoming-events">
-                <Button
-                  size="lg"
-                  className="w-full bg-[#14532D] text-white hover:bg-[#14532D]/90"
-                >
-                  Explore Events
-                </Button>
+              <Link
+                href="/upcoming-events"
+                className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-[#14532D] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#14532D]/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#14532D]/50 sm:w-auto"
+              >
+                Explore Events
               </Link>
 
-              <Link href="/create-event">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="w-full border-[#14532D]/40 bg-card text-foreground hover:bg-accent"
-                >
-                  Create an Event
-                </Button>
+              <Link
+                href="/create-event"
+                className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-[#14532D]/40 bg-card px-6 text-sm font-semibold text-foreground transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#14532D]/50 sm:w-auto"
+              >
+                Create an Event
               </Link>
             </div>
           </div>
 
-          {/* Photo with floating stat cards */}
-          <div className="relative w-full">
-            <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-[#14532D]/40 bg-muted">
-              <Image
-                src={heroPhoto}
-                alt="Volunteers planting a community tree together"
-                className="h-full w-full object-cover"
-                placeholder="blur"
-                priority
-                sizes="(min-width: 1024px) 50vw, 100vw"
-              />
-
-              {/* Active volunteers */}
-              <div className="absolute right-3 top-3 rounded-xl border border-border bg-card p-3 shadow-md md:right-5 md:top-5 md:p-4">
-                <p className="text-sm font-extrabold text-[#14532D] md:text-base">
-                  980
-                </p>
-                <p className="mt-1 text-[11px] text-muted-foreground md:text-xs">
-                  Active volunteers
-                </p>
-              </div>
-
-              {/* Events this month */}
-              <div className="absolute bottom-3 left-3 rounded-xl border border-border bg-card p-3 shadow-md md:bottom-5 md:left-5 md:p-4">
-                <p className="text-sm font-extrabold text-[#14532D] md:text-base">
-                  18
-                </p>
-                <p className="mt-1 text-[11px] text-muted-foreground md:text-xs">
-                  Events this month
-                </p>
-              </div>
-            </div>
-          </div>
+          {/* 3D hero visual */}
+          <HeroVisual />
         </div>
 
         {/* Stat cards */}

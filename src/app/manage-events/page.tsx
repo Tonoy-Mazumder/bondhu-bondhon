@@ -88,7 +88,7 @@ export default async function ManageEventsPage() {
               </p>
 
               <Link
-                href="/sign-in"
+                href="/login"
                 className="mt-4 inline-flex h-10 items-center rounded-lg bg-[#14532D] px-5 text-sm font-medium text-white hover:bg-[#14532D]/90"
               >
                 Log in

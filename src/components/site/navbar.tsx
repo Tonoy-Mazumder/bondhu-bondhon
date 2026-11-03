@@ -2,10 +2,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   Leaf,
+  Loader2,
   Menu,
   X,
   Sun,
@@ -47,6 +49,9 @@ const accountLinks = [
   { href: "/manage-events", label: "Manage Events" },
   { href: "/joined-events", label: "Joined Events" },
 ];
+
+const activeLinkClass =
+  "font-semibold text-[#14532D] dark:text-emerald-400 underline decoration-[#D9F99D] decoration-2 underline-offset-8";
 
 type SessionUser = {
   name: string;
@@ -227,38 +232,73 @@ function ProfileDialog({
 
 /* ---------------- Navbar ---------------- */
 
+// Hydration-safe "is client" flag: false during SSR, true on the client.
+const emptySubscribe = () => () => {};
+
 export function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
+
+  function isActive(href: string) {
+    return href === "/"
+      ? pathname === "/"
+      : pathname === href || pathname.startsWith(`${href}/`);
+  }
+
+  function navLinkClass(href: string, size: "desktop" | "mobile") {
+    if (isActive(href)) return activeLinkClass;
+
+    return size === "desktop"
+      ? "text-sm font-medium text-foreground transition-colors hover:text-[#14532D] dark:hover:text-emerald-400"
+      : "text-sm text-foreground transition-colors hover:text-[#14532D] dark:hover:text-emerald-400";
+  }
 
   const { resolvedTheme, setTheme } = useTheme();
 
-  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const { data: session, isPending } = authClient.useSession();
 
   const user = session?.user as SessionUser | undefined;
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+
+  const isAuthLoading = isPending || isLoggingOut;
 
   function toggleTheme() {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
   }
 
   async function handleLogout() {
-    setOpen(false);
+    if (isLoggingOut) return;
 
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          router.push("/login");
-          router.refresh();
+    setIsLoggingOut(true);
+
+    try {
+      const { error } = await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            setOpen(false);
+            router.push("/login");
+            router.refresh();
+          },
         },
-      },
-    });
+      });
+
+      if (error) {
+        console.error("Logout failed:", error);
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      setIsLoggingOut(false);
+    }
   }
 
   function openProfile() {
@@ -280,7 +320,7 @@ export function Navbar() {
           </span>
 
           <span className="flex flex-col leading-none">
-            <span className="text-lg font-bold tracking-tight text-[#14532D] md:text-2xl">
+            <span className="text-lg font-bold tracking-tight text-[#14532D] md:text-2xl dark:text-emerald-400">
               BondhuBondhon
             </span>
 
@@ -296,7 +336,8 @@ export function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-foreground transition-colors hover:text-[#14532D]"
+              aria-current={isActive(link.href) ? "page" : undefined}
+              className={navLinkClass(link.href, "desktop")}
             >
               {link.label}
             </Link>
@@ -324,8 +365,20 @@ export function Navbar() {
             )}
           </Button>
 
-          {isPending ? (
-            <div className="h-12 w-44 animate-pulse rounded-full bg-muted" />
+          {isAuthLoading ? (
+            <div
+              role="status"
+              aria-live="polite"
+              className="flex h-12 w-44 items-center justify-center gap-2 rounded-full bg-muted text-sm text-muted-foreground"
+            >
+              <Loader2
+                className="size-4 animate-spin"
+                aria-hidden="true"
+              />
+              <span>
+                {isLoggingOut ? "Logging out…" : "Loading account…"}
+              </span>
+            </div>
           ) : user ? (
             <>
               <DropdownMenu>
@@ -386,7 +439,9 @@ export function Navbar() {
               <Button
                 variant="outline"
                 onClick={handleLogout}
-                className="h-10 rounded-lg border-[#14532D] bg-transparent px-5 font-medium text-foreground hover:bg-[#14532D]/5"
+                disabled={isLoggingOut}
+                aria-busy={isLoggingOut}
+                className="min-w-32 justify-center rounded-lg border-[#14532D] bg-transparent px-5 font-medium text-foreground hover:bg-[#14532D]/5 dark:border-emerald-500/60 dark:hover:bg-emerald-500/10"
               >
                 Logout
               </Button>
@@ -395,7 +450,7 @@ export function Navbar() {
             <>
               <Link
                 href="/login"
-                className="inline-flex h-10 items-center rounded-lg border border-[#14532D] px-5 text-sm font-medium text-foreground transition-colors hover:bg-[#14532D]/5"
+                className="inline-flex h-10 items-center rounded-lg border border-[#14532D] px-5 text-sm font-medium text-foreground transition-colors hover:bg-[#14532D]/5 dark:border-emerald-500/60 dark:hover:bg-emerald-500/10"
               >
                 Log in
               </Link>
@@ -453,14 +508,29 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium text-foreground transition-colors hover:text-[#14532D]"
+                aria-current={isActive(link.href) ? "page" : undefined}
+                className={navLinkClass(link.href, "mobile")}
                 onClick={() => setOpen(false)}
               >
                 {link.label}
               </Link>
             ))}
 
-            {isPending ? null : user ? (
+            {isAuthLoading ? (
+              <div
+                role="status"
+                aria-live="polite"
+                className="flex items-center gap-2 border-t border-border pt-4 text-sm text-muted-foreground"
+              >
+                <Loader2
+                  className="size-4 animate-spin shrink-0"
+                  aria-hidden="true"
+                />
+                <span>
+                  {isLoggingOut ? "Logging out…" : "Loading account…"}
+                </span>
+              </div>
+            ) : user ? (
               <>
                 <div className="flex items-center gap-3 border-t border-border pt-4">
                   <Avatar className="size-10 border border-dashed border-[#14532D]/40 bg-muted">
@@ -509,7 +579,9 @@ export function Navbar() {
                 <Button
                   variant="outline"
                   onClick={handleLogout}
-                  className="mt-2 h-10 rounded-lg border-[#14532D] bg-transparent text-foreground hover:bg-[#14532D]/5"
+                  disabled={isLoggingOut}
+                  aria-busy={isLoggingOut}
+                  className="mt-2 h-10 rounded-lg border-[#14532D] bg-transparent text-foreground hover:bg-[#14532D]/5 dark:border-emerald-500/60 dark:hover:bg-emerald-500/10"
                 >
                   Logout
                 </Button>
@@ -519,7 +591,7 @@ export function Navbar() {
                 <Link
                   href="/login"
                   onClick={() => setOpen(false)}
-                  className="inline-flex h-10 items-center justify-center rounded-lg border border-[#14532D] text-sm font-medium text-foreground hover:bg-[#14532D]/5"
+                  className="inline-flex h-10 items-center justify-center rounded-lg border border-[#14532D] text-sm font-medium text-foreground hover:bg-[#14532D]/5 dark:border-emerald-500/60 dark:hover:bg-emerald-500/10"
                 >
                   Log in
                 </Link>

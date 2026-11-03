@@ -7,6 +7,7 @@ import {
   Trash2,
   Users,
   Utensils,
+    PawPrint,
 } from "lucide-react";
 
 const categories = [
@@ -46,6 +47,12 @@ const categories = [
     iconBg: "bg-[#D9F99D]",
     href: "/categories/community-support",
   },
+  {
+  title: "Animal Welfare",
+  icon: PawPrint,
+  iconBg: "bg-[#F9E2DC]",
+  href: "/categories/animal-welfare",
+},
 ];
 
 export function EventCategories() {

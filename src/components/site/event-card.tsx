@@ -17,46 +17,58 @@ function formatDate(iso: string) {
 
 export function EventCard({ event }: { event: IEventItem }) {
   return (
-    <article className="flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
       {event.image ? (
-        <div className="relative h-44 w-full border-b border-border">
+        <div className="relative h-48 w-full shrink-0 overflow-hidden border-b border-border">
           <img
             src={event.image}
             alt={event.title}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
           />
         </div>
       ) : (
-        <div className="flex h-44 w-full items-center justify-center border-b border-border bg-muted px-4 text-center text-sm text-muted-foreground">
+        <div className="flex h-48 w-full shrink-0 items-center justify-center border-b border-border bg-muted px-4 text-center text-sm text-muted-foreground">
           Event cover photo
         </div>
       )}
 
       <div className="flex flex-1 flex-col p-5">
-        <span className="w-fit rounded-full bg-[#D9F99D] px-3 py-1 text-xs font-semibold text-[#14532D]">
+        <span className="w-fit rounded-full bg-[#D9F99D] px-3 py-1 text-xs font-bold text-[#14532D]">
           {event.category}
         </span>
 
-        <h3 className="mt-3 text-xl font-extrabold leading-snug text-foreground">
+        <h3 className="mt-4 line-clamp-2 min-h-14 text-xl font-extrabold leading-snug text-foreground">
           {event.title}
         </h3>
 
-        <p className="mt-3 flex items-center gap-1.5 text-sm text-muted-foreground">
-          <MapPin className="size-4 shrink-0" aria-hidden="true" />
-          {event.location}
-        </p>
+        <div className="mt-4 space-y-3">
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <MapPin
+              className="size-4 shrink-0 text-[#14532D] dark:text-green-400"
+              aria-hidden="true"
+            />
+            <span className="line-clamp-1">
+              {event.location}
+            </span>
+          </p>
 
-        <p className="mt-1.5 flex items-center gap-1.5 text-sm text-muted-foreground">
-          <CalendarDays className="size-4 shrink-0" aria-hidden="true" />
-          {formatDate(event.date)}
-        </p>
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <CalendarDays
+              className="size-4 shrink-0 text-[#14532D] dark:text-green-400"
+              aria-hidden="true"
+            />
+            {formatDate(event.date)}
+          </p>
+        </div>
 
-        <Link
-          href={`/events/${event._id}`}
-          className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-lg bg-[#14532D] text-sm font-semibold text-white transition-colors hover:bg-[#14532D]/90"
-        >
-          View Event
-        </Link>
+        <div className="mt-auto pt-8">
+          <Link
+            href={`/events/${event._id}`}
+            className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-[#14532D] text-sm font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#166534] hover:shadow-md"
+          >
+            View Event
+          </Link>
+        </div>
       </div>
     </article>
   );

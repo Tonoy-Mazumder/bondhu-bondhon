@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Hero } from "@/components/site/hero";
 import { EventCategories } from "@/components/site/event-categories";
 import { UpcomingEvents } from "@/components/site/upcoming-events";

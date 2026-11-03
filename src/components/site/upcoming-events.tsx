@@ -28,8 +28,6 @@ export async function UpcomingEvents() {
   return (
     <section className="border-t border-border bg-background">
       <div className="mx-auto w-full max-w-7xl px-4 py-16 md:px-6 md:py-20 lg:py-24">
-
-        {/* Section heading */}
         <div className="mx-auto max-w-xl text-center">
           <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
             Upcoming Events
@@ -40,7 +38,6 @@ export async function UpcomingEvents() {
           </p>
         </div>
 
-        {/* API Error */}
         {apiError ? (
           <div className="mt-12 rounded-xl border border-border bg-card p-10 text-center md:mt-16">
             <h3 className="text-2xl font-extrabold text-foreground">
@@ -59,23 +56,17 @@ export async function UpcomingEvents() {
             </Link>
           </div>
         ) : events.length === 0 ? (
-          /* Empty State */
           <p className="mt-12 rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground md:mt-16">
             No upcoming events yet. Check back soon!
           </p>
         ) : (
           <>
-            {/* Event Cards */}
             <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 md:mt-16 lg:grid-cols-3 xl:grid-cols-4">
               {events.slice(0, 6).map((event) => (
-                <EventCard
-                  key={event._id}
-                  event={event}
-                />
+                <EventCard key={event._id} event={event} />
               ))}
             </div>
 
-            {/* View All Events */}
             <div className="mt-12 flex justify-center md:mt-16">
               <Link
                 href="/upcoming-events"

@@ -6,6 +6,14 @@ import type { IEventItem } from "@/app/types/Events";
 const API =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
+export const dynamic = "force-dynamic";
+
+export const metadata = {
+  title: "Upcoming Events",
+  description:
+    "The latest community-service events looking for volunteers.",
+};
+
 export default async function UpcomingEventsPage() {
   let events: IEventItem[] = [];
   let apiError = false;
@@ -63,8 +71,3 @@ export default async function UpcomingEventsPage() {
     </section>
   );
 }
-
-export const metadata = {
-  title: "Upcoming Events",
-  description: "The latest community-service events looking for volunteers.",
-};

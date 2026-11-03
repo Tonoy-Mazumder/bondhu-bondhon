@@ -94,6 +94,7 @@ export default function CreateEventPage() {
 
       const res = await fetch(`${API}/create-events`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },

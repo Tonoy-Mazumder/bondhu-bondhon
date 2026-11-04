@@ -3,8 +3,9 @@ import Link from "next/link";
 import { EventCard } from "@/components/site/event-card";
 import type { IEventItem } from "@/app/types/Events";
 
-const API =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API = (
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+).replace(/\/$/, "");
 
 export async function UpcomingEvents() {
   let events: IEventItem[] = [];
@@ -25,6 +26,31 @@ export async function UpcomingEvents() {
     apiError = true;
   }
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const latestEvents = [...events]
+    .filter((event) => {
+      const eventDate = new Date(event.date).getTime();
+
+      return (
+        event.status === "upcoming" &&
+        !Number.isNaN(eventDate) &&
+        eventDate >= today.getTime()
+      );
+    })
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt || "1970-01-01").getTime() -
+        new Date(a.createdAt || "1970-01-01").getTime()
+    )
+    .slice(0, 6);
+  console.log("Total events:", events.length);
+  console.log("Latest events count:", latestEvents.length);
+  console.log(
+    "Latest event titles:",
+    latestEvents.map((event) => event.title)
+  );
   return (
     <section className="border-t border-border bg-background">
       <div className="mx-auto w-full max-w-7xl px-4 py-16 md:px-6 md:py-20 lg:py-24">
@@ -32,37 +58,34 @@ export async function UpcomingEvents() {
           <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
             Upcoming Events
           </h2>
-
           <p className="mt-4 text-base text-muted-foreground">
             The latest events looking for volunteers.
           </p>
         </div>
 
         {apiError ? (
-          <div className="mt-12 rounded-xl border border-border bg-card p-10 text-center md:mt-16">
+          <div className="mt-12 rounded-xl border border-border bg-card p-10 text-center">
             <h3 className="text-2xl font-extrabold text-foreground">
               Couldn&apos;t load events
             </h3>
-
             <p className="mt-2 text-sm text-muted-foreground">
               Check your connection and try again.
             </p>
-
             <Link
               href="/"
-              className="mt-5 inline-flex h-11 items-center justify-center rounded-lg bg-[#14532D] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#14532D]/90"
+              className="mt-5 inline-flex h-11 items-center justify-center rounded-lg bg-[#14532D] px-6 text-sm font-semibold text-white"
             >
               Retry
             </Link>
           </div>
-        ) : events.length === 0 ? (
-          <p className="mt-12 rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground md:mt-16">
+        ) : latestEvents.length === 0 ? (
+          <p className="mt-12 rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
             No upcoming events yet. Check back soon!
           </p>
         ) : (
           <>
             <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 md:mt-16 lg:grid-cols-3 xl:grid-cols-4">
-              {events.slice(0, 6).map((event) => (
+              {latestEvents.map((event) => (
                 <EventCard key={event._id} event={event} />
               ))}
             </div>

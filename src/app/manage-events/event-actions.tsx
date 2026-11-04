@@ -15,7 +15,7 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { toast } from "@/components/ui/toast";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/$/, "");
 
 const EVENT_TYPES = [
   "Environment",
@@ -40,6 +40,7 @@ type EventItem = {
   image?: string | null;
   location?: string;
   date: string;
+  startTime?: string;
   capacity?: number;
   joinedCount?: number;
 };
@@ -101,6 +102,15 @@ export default function EventActions({
       isNaN(selectedDate.getTime())
     ) {
       setEditError("Event date must be today or a future date.");
+      setSaving(false);
+      return;
+    }
+
+    if (
+      typeof data.startTime !== "string" ||
+      !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(data.startTime)
+    ) {
+      setEditError("Please enter a valid event start time.");
       setSaving(false);
       return;
     }
@@ -343,6 +353,25 @@ export default function EventActions({
               />
             </div>
 
+            {/* Event start time */}
+            <div>
+              <label
+                htmlFor={`startTime-${event._id}`}
+                className={labelClass}
+              >
+                Event start time
+              </label>
+
+              <input
+                id={`startTime-${event._id}`}
+                name="startTime"
+                type="time"
+                required
+                defaultValue={event.startTime ?? "09:00"}
+                className={fieldClass}
+              />
+            </div>
+
             <div>
               <label
                 htmlFor={`capacity-${event._id}`}
@@ -407,7 +436,7 @@ export default function EventActions({
             </DialogTitle>
 
             <DialogDescription className="text-muted-foreground">
-              This can&apos;t be undone. People who joined will no longer see it.
+              This can't be undone. People who joined will no longer see it.
             </DialogDescription>
           </DialogHeader>
 

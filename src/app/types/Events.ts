@@ -8,9 +8,11 @@ export type IEventItem = {
   image: string;
   organizer: string;
   capacity: number;
+  startTime?: string;
   joinedCount: number;
   status: string;
   participants?: string[];
   organizerName?: string;
   organizerImage?: string;
+  createdAt: string;
 };

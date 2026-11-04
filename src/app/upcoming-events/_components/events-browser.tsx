@@ -42,6 +42,10 @@ export function EventsBrowser({
     const filtered = events.filter((event) => {
       const eventDate = new Date(event.date).getTime();
 
+      if (event.status !== "upcoming") {
+        return false;
+      }
+
       if (Number.isNaN(eventDate) || eventDate < startOfToday) {
         return false;
       }
@@ -70,10 +74,9 @@ export function EventsBrowser({
   }, [events, search, sort, category, startOfToday]);
 
   const pillClass = (active: boolean) =>
-    `rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-      active
-        ? "bg-[#14532D] text-white"
-        : "border border-border bg-card text-foreground hover:border-[#14532D]/50 hover:bg-accent"
+    `rounded-full px-4 py-2 text-sm font-medium transition-colors ${active
+      ? "bg-[#14532D] text-white"
+      : "border border-border bg-card text-foreground hover:border-[#14532D]/50 hover:bg-accent"
     }`;
 
   return (

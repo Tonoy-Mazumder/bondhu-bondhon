@@ -6,8 +6,7 @@ import { authClient } from "@/lib/auth-client";
 import { useState } from "react";
 import { toast } from "@/components/ui/toast";
 
-const API =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/$/, "");
 
 const EVENT_TYPES = [
   "Environment",
@@ -81,6 +80,7 @@ export default function CreateEventPage() {
       formData.get("location") || ""
     ).trim();
     const selectedDate = String(formData.get("date") || "");
+    const selectedTime = String(formData.get("startTime") || "");
     const capacityValue = String(
       formData.get("capacity") || ""
     );
@@ -122,6 +122,12 @@ export default function CreateEventPage() {
       return;
     }
 
+    // Start time validation
+    if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(selectedTime)) {
+      setError("Please select a valid event start time.");
+      return;
+    }
+
     // Capacity validation
     if (!capacityValue.trim()) {
       setError("Please enter the maximum participants.");
@@ -146,6 +152,7 @@ export default function CreateEventPage() {
       image,
       location,
       date: selectedDate,
+      startTime: selectedTime,
       capacity,
     };
 
@@ -312,8 +319,9 @@ export default function CreateEventPage() {
               />
             </div>
 
-            {/* Date and Capacity */}
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            {/* Date, Time and Capacity */}
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              {/* Date */}
               <div>
                 <label htmlFor="date" className={labelClass}>
                   Event Date
@@ -340,6 +348,22 @@ export default function CreateEventPage() {
                 )}
               </div>
 
+              {/* Start Time */}
+              <div>
+                <label htmlFor="startTime" className={labelClass}>
+                  Event Start Time
+                </label>
+
+                <input
+                  id="startTime"
+                  name="startTime"
+                  type="time"
+                  required
+                  className={fieldClass}
+                />
+              </div>
+
+              {/* Capacity */}
               <div>
                 <label htmlFor="capacity" className={labelClass}>
                   Maximum Participants

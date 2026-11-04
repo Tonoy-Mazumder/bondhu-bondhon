@@ -28,6 +28,7 @@ export default async function UpcomingEventsPage() {
     }
 
     events = await res.json();
+    console.log(events);
   } catch (error) {
     console.error("Event fetching error:", error);
     apiError = true;

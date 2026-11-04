@@ -2,7 +2,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, MapPin } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  MapPin,
+  Clock,
+} from "lucide-react";
 import { JoinEventButton } from "./_components/join-event-button";
 import type { IEventItem } from "@/app/types/Events";
 import { auth } from "@/lib/auth";
@@ -12,8 +17,9 @@ type EventDetailsPageProps = {
   params: Promise<{ id: string }>;
 };
 
-const API =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API = (
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+).replace(/\/$/, "");
 
 async function loadEvent(id: string): Promise<IEventItem | null> {
   try {
@@ -34,18 +40,36 @@ async function loadEvent(id: string): Promise<IEventItem | null> {
   }
 }
 
-function formatDateTime(iso: string) {
-  const date = new Date(iso);
+// Format date without timezone conversion
+function formatDate(dateString: string) {
+  const [year, month, day] = dateString.split("-").map(Number);
 
-  if (Number.isNaN(date.getTime())) return iso;
+  if (!year || !month || !day) return dateString;
 
-  return date.toLocaleString("en-GB", {
+  const date = new Date(year, month - 1, day);
+
+  return date.toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
     year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
   });
+}
+
+// Format time directly from HH:mm
+function formatTime(timeString?: string) {
+  if (!timeString) return "Time not specified";
+
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(timeString);
+
+  if (!match) return timeString;
+
+  const hour = Number(match[1]);
+  const minute = match[2];
+
+  const period = hour >= 12 ? "PM" : "AM";
+  const formattedHour = hour % 12 || 12;
+
+  return `${formattedHour}:${minute} ${period}`;
 }
 
 export async function generateMetadata({
@@ -79,7 +103,6 @@ const EventDetailsPage = async ({
   return (
     <section className="min-h-full bg-background">
       <div className="mx-auto w-full max-w-7xl px-4 py-12 md:px-6 md:py-16">
-        {/* Back Button */}
         <Link
           href="/upcoming-events"
           className="inline-flex items-center gap-2 text-sm font-semibold text-[#14532D] transition-colors hover:text-[#14532D]/80 dark:text-emerald-400 dark:hover:text-emerald-300"
@@ -88,7 +111,6 @@ const EventDetailsPage = async ({
           Back to events
         </Link>
 
-        {/* Cover Photo */}
         <div className="mt-6 overflow-hidden rounded-xl border border-border">
           {event.image ? (
             <div className="relative h-64 w-full sm:h-80 lg:h-[420px]">
@@ -109,7 +131,6 @@ const EventDetailsPage = async ({
         </div>
 
         <div className="mt-10 grid grid-cols-1 gap-10 lg:mt-12 lg:grid-cols-[1.1fr_0.9fr]">
-          {/* Event Information */}
           <div>
             <span className="w-fit rounded-full bg-[#D9F99D] px-3 py-1 text-xs font-semibold text-[#14532D]">
               {event.category}
@@ -119,18 +140,22 @@ const EventDetailsPage = async ({
               {event.title}
             </h1>
 
-            <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
-              <MapPin className="size-4 shrink-0" aria-hidden="true" />
-              {event.location}
+            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-muted-foreground">
+              <span className="flex items-center gap-2">
+                <MapPin className="size-4 shrink-0" />
+                {event.location}
+              </span>
 
-              <span aria-hidden="true">·</span>
+              <span className="flex items-center gap-2">
+                <CalendarDays className="size-4 shrink-0" />
+                {formatDate(event.date)}
+              </span>
 
-              <CalendarDays
-                className="size-4 shrink-0"
-                aria-hidden="true"
-              />
-              {formatDateTime(event.date)}
-            </p>
+              <span className="flex items-center gap-2">
+                <Clock className="size-4 shrink-0" />
+                {formatTime(event.startTime)}
+              </span>
+            </div>
 
             <h2 className="mt-8 text-2xl font-extrabold text-foreground">
               About this event
@@ -141,8 +166,6 @@ const EventDetailsPage = async ({
             </p>
           </div>
 
-          {/* Organizer and Join Event */}
-       
           <aside>
             <div className="rounded-xl border border-border bg-card p-6 shadow-sm lg:sticky lg:top-8">
               <div className="flex items-center gap-3">
